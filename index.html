@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From the Boot — Kitchen Database</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-authentication-library-for-js/2.38.0/msal-browser.min.js"></script>
+<style>
+  :root {
+    --red:        #8B0000;
+    --red-light:  #C0392B;
+    --red-dim:    rgba(139,0,0,0.08);
+    --gold:       #C8960C;
+    --gold-light: #F5E6B0;
+    --cream:      #FAF7F2;
+    --cream-dark: #F0EBE1;
+    --ink:        #1C1410;
+    --ink-mid:    #4A3F35;
+    --ink-soft:   #8A7A6E;
+    --white:      #FFFFFF;
+    --border:     rgba(139,0,0,0.15);
+    --shadow:     0 4px 24px rgba(28,20,16,0.10);
+    --shadow-lg:  0 12px 48px rgba(28,20,16,0.16);
+    --radius:     12px;
+    --radius-sm:  7px;
+    --purple:     #5B2D8E;
+    --purple-dim: rgba(91,45,142,0.08);
+    --green:      #1A5C1A;
+    --green-dim:  rgba(26,92,26,0.08);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SIDEBAR ─────────────────────────────────────── */
+  #sidebar {
+    position: fixed; top: 0; left: 0;
+    width: 240px; height: 100vh;
+    background: var(--ink);
+    display: flex; flex-direction: column;
+    z-index: 100;
+    border-right: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .sidebar-logo {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar-logo .brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 900;
+    color: var(--white); letter-spacing: -0.3px;
+    line-height: 1.15;
+  }
+  .sidebar-logo .brand span { color: var(--gold); }
+  .sidebar-logo .sub {
+    font-size: 10px; color: var(--ink-soft);
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-top: 4px; font-weight: 500;
+  }
+
+  .lang-toggle {
+    margin: 16px 20px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 8px;
+    display: flex; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .lang-btn {
+    flex: 1; padding: 8px 4px;
+    background: none; border: none;
+    color: var(--ink-soft); cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .lang-btn.active {
+    background: var(--gold);
+    color: var(--ink);
+    border-radius: 6px;
+  }
+
+  .nav-section {
+    padding: 8px 12px 4px;
+    font-size: 9px; font-weight: 600;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; margin: 1px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer; transition: all 0.18s;
+    color: rgba(255,255,255,0.55);
+    font-size: 13.5px; font-weight: 400;
+    border: none; background: none; width: calc(100% - 16px);
+    text-align: left;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+  .nav-item.active { background: var(--red); color: var(--white); font-weight: 600; }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 11px; color: var(--ink-soft);
+  }
+  .conn-dot {
+    display: inline-block; width: 7px; height: 7px;
+    border-radius: 50%; background: #4CAF50;
+    margin-right: 6px; vertical-align: middle;
+  }
+
+  /* ── MAIN ─────────────────────────────────────────── */
+  #main {
+    margin-left: 240px;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  .topbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 36px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .page-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 700;
+    color: var(--ink);
+  }
+  .page-title span { color: var(--red); }
+
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+  .btn {
+    padding: 9px 18px; border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none; transition: all 0.18s;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .btn-primary { background: var(--red); color: var(--white); }
+  .btn-primary:hover { background: var(--red-light); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .btn-ghost { background: transparent; color: var(--ink-mid); border: 1.5px solid var(--border); }
+  .btn-ghost:hover { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+  .btn-gold { background: var(--gold); color: var(--ink); }
+  .btn-gold:hover { background: #b8860a; transform: translateY(-1px); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  .content { padding: 32px 36px; }
+
+  /* ── CARDS ────────────────────────────────────────── */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 700; color: var(--ink);
+  }
+  .card-body { padding: 0; }
+
+  /* ── STATS ROW ────────────────────────────────────── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px; margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    position: relative; overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px; background: var(--red);
+  }
+  .stat-card.gold::before { background: var(--gold); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.purple::before { background: var(--purple); }
+  .stat-label { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 8px; }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 900; color: var(--ink); line-height: 1; }
+  .stat-sub { font-size: 11px; color: var(--ink-soft); margin-top: 5px; }
+
+  /* ── TABLE ────────────────────────────────────────── */
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th {
+    padding: 12px 16px;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--ink-soft);
+    background: var(--cream);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  .data-table td {
+    padding: 13px 16px;
+    font-size: 13.5px;
+    border-bottom: 1px solid rgba(139,0,0,0.06);
+    vertical-align: middle;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: var(--red-dim); }
+  .data-table tr.special-row:hover td { background: var(--purple-dim); }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-active   { background: var(--green-dim); color: var(--green); }
+  .badge-inactive { background: var(--cream-dark); color: var(--ink-soft); }
+  .badge-seasonal { background: var(--gold-light); color: #7a5a00; }
+  .badge-archived { background: #f0f0f0; color: #888; }
+  .badge-l1 { background: var(--red-dim); color: var(--red); }
+  .badge-l2 { background: rgba(200,150,12,0.12); color: #7a5a00; }
+
+  .cost-cell { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--green); }
+  .price-cell { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 600; color: var(--ink); }
+  .fc-cell { font-family: 'DM Mono', monospace; font-size: 13px; }
+  .fc-good { color: var(--green); }
+  .fc-warn { color: var(--gold); }
+  .fc-bad  { color: var(--red-light); }
+
+  .action-btns { display: flex; gap: 6px; }
+  .icon-btn {
+    width: 30px; height: 30px; border-radius: 6px;
+    border: 1.5px solid var(--border);
+    background: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: all 0.15s; color: var(--ink-soft);
+  }
+  .icon-btn:hover { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+
+  /* ── MODAL ────────────────────────────────────────── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(28,20,16,0.55);
+    backdrop-filter: blur(4px);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white);
+    border-radius: 16px; box-shadow: var(--shadow-lg);
+    width: 560px; max-width: 95vw;
+    max-height: 85vh; overflow-y: auto;
+    animation: modalIn 0.22s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .modal-header {
+    padding: 24px 28px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; background: var(--white); z-index: 1;
+  }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; }
+  .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--ink-soft); line-height: 1; }
+  .modal-body { padding: 24px 28px; }
+  .modal-footer { padding: 16px 28px 24px; display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid var(--border); }
+
+  .form-group { margin-bottom: 18px; }
+  .form-label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; color: var(--ink-mid); margin-bottom: 6px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; color: var(--ink);
+    background: var(--cream);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--red); background: var(--white);
+  }
+  .form-textarea { min-height: 80px; resize: vertical; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  /* ── RECIPE DETAIL ────────────────────────────────── */
+  .recipe-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden; margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    transition: box-shadow 0.2s;
+  }
+  .recipe-card:hover { box-shadow: var(--shadow-lg); }
+  .recipe-card-header {
+    padding: 16px 22px;
+    background: var(--ink);
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer;
+  }
+  .recipe-card-header.special-hdr { background: var(--purple); }
+  .recipe-name { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: var(--white); }
+  .recipe-meta { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 3px; }
+  .recipe-cost-badge {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px; padding: 6px 14px; text-align: right;
+  }
+  .recipe-cost-badge .cost-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.5); }
+  .recipe-cost-badge .cost-val { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 600; color: var(--gold); }
+
+  .recipe-body { padding: 20px 22px; display: none; }
+  .recipe-body.open { display: block; }
+
+  .ing-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .ing-table th { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ink-soft); padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+  .ing-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid rgba(139,0,0,0.05); }
+  .ing-table tr:last-child td { border-bottom: none; }
+  .source-tag { font-size: 10px; color: var(--ink-soft); background: var(--cream); padding: 2px 7px; border-radius: 4px; }
+
+  .procedure-box {
+    margin-top: 16px; padding: 14px 16px;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--red);
+    background: var(--red-dim);
+  }
+  .procedure-box.es { border-left-color: var(--purple); background: var(--purple-dim); }
+  .procedure-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 6px; }
+  .procedure-text { font-size: 13.5px; color: var(--ink-mid); line-height: 1.6; }
+
+  /* ── DASHBOARD ────────────────────────────────────── */
+  .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+  .specials-preview { display: flex; flex-direction: column; gap: 10px; }
+  .special-pill {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-left: 3px solid var(--purple);
+  }
+  .special-pill-name { font-weight: 600; font-size: 14px; }
+  .special-pill-dates { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+
+  /* ── SEARCH BAR ───────────────────────────────────── */
+  .search-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--cream); border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); padding: 8px 14px;
+    margin-bottom: 20px;
+  }
+  .search-bar input {
+    border: none; background: none; outline: none;
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    color: var(--ink); flex: 1;
+  }
+  .search-bar .search-icon { color: var(--ink-soft); font-size: 16px; }
+
+  /* ── AUTH SCREEN ──────────────────────────────────── */
+  #auth-screen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: var(--ink);
+  }
+  .auth-box {
+    text-align: center; padding: 56px 48px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px; max-width: 400px;
+  }
+  .auth-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px; font-weight: 900; color: var(--white);
+    margin-bottom: 4px;
+  }
+  .auth-logo span { color: var(--gold); }
+  .auth-sub { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 36px; }
+  .auth-desc { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 32px; line-height: 1.7; }
+  .btn-signin {
+    background: var(--red); color: var(--white);
+    border: none; padding: 14px 32px; border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; width: 100%;
+  }
+  .btn-signin:hover { background: var(--red-light); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(139,0,0,0.4); }
+  .auth-note { font-size: 11px; color: var(--ink-soft); margin-top: 16px; }
+
+  /* ── LOADING ──────────────────────────────────────── */
+  .loading-spinner {
+    display: flex; align-items: center; justify-content: center;
+    padding: 60px; color: var(--ink-soft);
+    flex-direction: column; gap: 16px;
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--red);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── EMPTY STATE ──────────────────────────────────── */
+  .empty-state {
+    text-align: center; padding: 60px 24px;
+    color: var(--ink-soft);
+  }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state h3 { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--ink); margin-bottom: 8px; }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  /* ── TOAST ────────────────────────────────────────── */
+  #toast {
+    position: fixed; bottom: 28px; right: 28px;
+    background: var(--ink); color: var(--white);
+    padding: 13px 20px; border-radius: var(--radius-sm);
+    font-size: 13.5px; font-weight: 500;
+    box-shadow: var(--shadow-lg); z-index: 999;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s; pointer-events: none;
+    display: flex; align-items: center; gap: 10px;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success .toast-dot { background: #4CAF50; }
+  #toast.error .toast-dot { background: var(--red-light); }
+  .toast-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); }
+
+  /* ── FILTER TABS ──────────────────────────────────── */
+  .filter-tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-tab {
+    padding: 6px 16px; border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1.5px solid var(--border);
+    background: var(--white); color: var(--ink-soft);
+    transition: all 0.15s;
+  }
+  .filter-tab.active { background: var(--red); border-color: var(--red); color: var(--white); }
+  .filter-tab.purple.active { background: var(--purple); border-color: var(--purple); }
+
+  .divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+  .hidden { display: none !important; }
+
+  /* ── SYNC INDICATOR ───────────────────────────────── */
+  .sync-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--green-dim); color: var(--green);
+    border: 1px solid rgba(26,92,26,0.2);
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .sync-badge.syncing { background: var(--gold-light); color: #7a5a00; border-color: rgba(200,150,12,0.3); }
+  .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">from the <span>boot</span></div>
+    <div class="auth-sub">Kitchen Database</div>
+    <div class="auth-desc">Sign in with your fromtheboot.com Microsoft account to access the recipe and ingredient database.</div>
+    <button class="btn-signin" onclick="signIn()">Sign in with Microsoft</button>
+    <div class="auth-note">Uses your existing fromtheboot.com account — no new password needed</div>
+  </div>
+</div>
+
+<!-- MAIN APP (hidden until signed in) -->
+<div id="app" class="hidden">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">from the <span>boot</span></div>
+      <div class="sub">Kitchen Database</div>
+    </div>
+
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('en')" id="btn-en">EN</button>
+      <button class="lang-btn" onclick="setLang('es')" id="btn-es">ES</button>
+    </div>
+
+    <div class="nav-section">Database</div>
+    <button class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+      <span class="icon">🏠</span> Dashboard
+    </button>
+    <button class="nav-item" onclick="showPage('ingredients')" id="nav-ingredients">
+      <span class="icon">🧄</span> <span class="nav-label" data-en="Ingredients" data-es="Ingredientes">Ingredients</span>
+    </button>
+    <button class="nav-item" onclick="showPage('batch-l1')" id="nav-batch-l1">
+      <span class="icon">🍅</span> <span class="nav-label" data-en="Batch Recipes L1" data-es="Recetas Base N1">Batch Recipes L1</span>
+    </button>
+    <button class="nav-item" onclick="showPage('batch-l2')" id="nav-batch-l2">
+      <span class="icon">🥘</span> <span class="nav-label" data-en="Batch Recipes L2" data-es="Recetas Base N2">Batch Recipes L2</span>
+    </button>
+    <button class="nav-item" onclick="showPage('menu')" id="nav-menu">
+      <span class="icon">🍝</span> <span class="nav-label" data-en="Menu Dishes" data-es="Platos del Menú">Menu Dishes</span>
+    </button>
+    <button class="nav-item" onclick="showPage('specials')" id="nav-specials">
+      <span class="icon">⭐</span> <span class="nav-label" data-en="Specials" data-es="Especiales">Specials</span>
+    </button>
+
+    <div class="sidebar-footer">
+      <div><span class="conn-dot"></span> Connected to OneDrive</div>
+      <div style="margin-top:6px; font-size:10px;">From the Boot Menu and Pricing Excel Database.xlsx</div>
+      <div style="margin-top:10px;">
+        <button onclick="signOut()" style="background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:11px;padding:0;">Sign out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div id="main">
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="page">
+      <div class="topbar">
+        <div class="page-title">Dashboard</div>
+        <div class="topbar-actions">
+          <div class="sync-badge" id="sync-status"><div class="sync-dot"></div> Synced</div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Ingredients</div>
+            <div class="stat-value" id="stat-ingredients">—</div>
+            <div class="stat-sub">raw items tracked</div>
+          </div>
+          <div class="stat-card gold">
+            <div class="stat-label">Batch L1</div>
+            <div class="stat-value" id="stat-l1">—</div>
+            <div class="stat-sub">foundational preps</div>
+          </div>
+          <div class="stat-card gold">
+            <div class="stat-label">Batch L2</div>
+            <div class="stat-value" id="stat-l2">—</div>
+            <div class="stat-sub">compound sauces</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">Menu Dishes</div>
+            <div class="stat-value" id="stat-menu">—</div>
+            <div class="stat-sub">plated items</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-label">Active Specials</div>
+            <div class="stat-value" id="stat-specials">—</div>
+            <div class="stat-sub">running now</div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Recent Activity</div>
+            </div>
+            <div class="card-body" style="padding:24px;">
+              <div class="empty-state" style="padding:32px 0;">
+                <div class="empty-icon">📋</div>
+                <h3>Database Connected</h3>
+                <p>Your OneDrive Excel database is linked.<br>Start adding recipes and ingredients to see activity here.</p>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title" style="color:var(--purple);">⭐ Active Specials</div>
+              <button class="btn btn-ghost btn-sm" onclick="showPage('specials')">View All</button>
+            </div>
+            <div class="card-body" style="padding:16px;" id="dashboard-specials">
+              <div style="padding:20px;text-align:center;color:var(--ink-soft);font-size:13px;">No active specials</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ingredients -->
+    <div id="page-ingredients" class="page hidden">
+      <div class="topbar">
+        <div class="page-title"><span class="page-label" data-en="Ingredients" data-es="Ingredientes">Ingredients</span></div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="openModal('modal-add-ingredient')">+ Add Ingredient</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Search ingredients..." oninput="filterIngredients(this.value)" id="ing-search">
+        </div>
+        <div class="filter-tabs" id="ing-category-filters">
+          <div class="filter-tab active" onclick="filterIngCategory('all', this)">All</div>
+          <div class="filter-tab" onclick="filterIngCategory('Proteins', this)">Proteins</div>
+          <div class="filter-tab" onclick="filterIngCategory('Produce', this)">Produce</div>
+          <div class="filter-tab" onclick="filterIngCategory('Dairy', this)">Dairy</div>
+          <div class="filter-tab" onclick="filterIngCategory('Dry Goods', this)">Dry Goods</div>
+          <div class="filter-tab" onclick="filterIngCategory('Wine & Spirits', this)">Wine & Spirits</div>
+          <div class="filter-tab" onclick="filterIngCategory('Stocks & Bases', this)">Stocks & Bases</div>
+          <div class="filter-tab" onclick="filterIngCategory('Herbs & Spices', this)">Herbs & Spices</div>
+          <div class="filter-tab" onclick="filterIngCategory('Oils & Vinegars', this)">Oils & Vinegars</div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <div id="ingredients-loading" class="loading-spinner"><div class="spinner"></div><span>Loading from OneDrive...</span></div>
+            <table class="data-table" id="ingredients-table" style="display:none;">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th class="col-label" data-en="Ingredient" data-es="Ingrediente">Ingredient</th>
+                  <th>Category</th>
+                  <th>Unit</th>
+                  <th>Unit Cost</th>
+                  <th>Supplier</th>
+                  <th>Last Updated</th>
+                  <th>Active</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="ingredients-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Batch L1 -->
+    <div id="page-batch-l1" class="page hidden">
+      <div class="topbar">
+        <div class="page-title"><span class="page-label" data-en="Batch Recipes — Level 1" data-es="Recetas Base — Nivel 1">Batch Recipes — Level 1</span></div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="openModal('modal-add-batch')">+ Add Batch Recipe</button>
+        </div>
+      </div>
+      <div class="content">
+        <p style="font-size:13px;color:var(--ink-soft);margin-bottom:20px;">Foundational house-made preparations using raw ingredients only. Cost per oz flows up into L2 recipes automatically.</p>
+        <div id="batch-l1-loading" class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="batch-l1-list"></div>
+      </div>
+    </div>
+
+    <!-- Batch L2 -->
+    <div id="page-batch-l2" class="page hidden">
+      <div class="topbar">
+        <div class="page-title"><span class="page-label" data-en="Batch Recipes — Level 2" data-es="Recetas Base — Nivel 2">Batch Recipes — Level 2</span></div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="openModal('modal-add-batch')">+ Add Batch Recipe</button>
+        </div>
+      </div>
+      <div class="content">
+        <p style="font-size:13px;color:var(--ink-soft);margin-bottom:20px;">Compound sauces and preps that use raw ingredients AND Level 1 batch recipes as components.</p>
+        <div id="batch-l2-loading" class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="batch-l2-list"></div>
+      </div>
+    </div>
+
+    <!-- Menu Dishes -->
+    <div id="page-menu" class="page hidden">
+      <div class="topbar">
+        <div class="page-title"><span class="page-label" data-en="Menu Dishes" data-es="Platos del Menú">Menu Dishes</span></div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" onclick="openModal('modal-add-dish')">+ Add Dish</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Search menu..." oninput="filterMenu(this.value)" id="menu-search">
+        </div>
+        <div id="menu-loading" class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="menu-list"></div>
+      </div>
+    </div>
+
+    <!-- Specials -->
+    <div id="page-specials" class="page hidden">
+      <div class="topbar">
+        <div class="page-title" style="color:var(--purple);"><span class="page-label" data-en="⭐ Specials" data-es="⭐ Especiales">⭐ Specials</span></div>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" style="background:var(--purple);" onclick="openModal('modal-add-special')">+ Add Special</button>
+        </div>
+      </div>
+      <div class="content">
+        <div class="filter-tabs">
+          <div class="filter-tab purple active" onclick="filterSpecials('all', this)">All</div>
+          <div class="filter-tab purple" onclick="filterSpecials('Active', this)">Active</div>
+          <div class="filter-tab purple" onclick="filterSpecials('Seasonal', this)">Seasonal</div>
+          <div class="filter-tab purple" onclick="filterSpecials('Inactive', this)">Inactive</div>
+          <div class="filter-tab purple" onclick="filterSpecials('Archived', this)">Archived</div>
+        </div>
+        <div id="specials-loading" class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="specials-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<!-- Add Ingredient Modal -->
+<div class="modal-overlay" id="modal-add-ingredient">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Ingredient</div>
+      <button class="modal-close" onclick="closeModal('modal-add-ingredient')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Ingredient Name (EN)</label>
+          <input class="form-input" id="ing-name-en" placeholder="e.g. Heavy Cream">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ingredient Name (ES)</label>
+          <input class="form-input" id="ing-name-es" placeholder="e.g. Crema Espesa">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-select" id="ing-category">
+            <option>Proteins</option><option>Produce</option><option>Dairy</option>
+            <option>Dry Goods</option><option>Oils & Vinegars</option>
+            <option>Wine & Spirits</option><option>Stocks & Bases</option>
+            <option>Herbs & Spices</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unit of Measure</label>
+          <input class="form-input" id="ing-unit" placeholder="oz, bottle, lb, qt...">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Unit Cost ($)</label>
+          <input class="form-input" id="ing-cost" type="number" step="0.001" placeholder="0.000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Supplier</label>
+          <input class="form-input" id="ing-supplier" placeholder="e.g. Sysco">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input class="form-input" id="ing-notes" placeholder="Optional notes...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-ingredient')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveIngredient()">Save to Database</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Special Modal -->
+<div class="modal-overlay" id="modal-add-special">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" style="color:var(--purple);">Add Special</div>
+      <button class="modal-close" onclick="closeModal('modal-add-special')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Dish Name (EN)</label>
+          <input class="form-input" id="sp-name-en" placeholder="e.g. Branzino al Limone">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dish Name (ES)</label>
+          <input class="form-input" id="sp-name-es" placeholder="e.g. Branzino al Limón">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Station</label>
+          <input class="form-input" id="sp-station" placeholder="Sauté, Grill, Cold...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="sp-status">
+            <option>Active</option><option>Seasonal</option>
+            <option>Inactive</option><option>Archived</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Menu Price ($)</label>
+          <input class="form-input" id="sp-price" type="number" step="0.01" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Food Cost %</label>
+          <input class="form-input" id="sp-target-fc" placeholder="e.g. 30%">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Run Start Date</label>
+          <input class="form-input" id="sp-start" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Run End Date</label>
+          <input class="form-input" id="sp-end" type="date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Chef Notes / Sourcing</label>
+        <textarea class="form-textarea" id="sp-notes" placeholder="Inspiration, sourcing notes, pairings..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Procedure (EN)</label>
+        <textarea class="form-textarea" id="sp-proc-en" placeholder="Step by step in English..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Procedure (ES)</label>
+        <textarea class="form-textarea" id="sp-proc-es" placeholder="Procedimiento en español..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-special')">Cancel</button>
+      <button class="btn btn-primary" style="background:var(--purple);" onclick="saveSpecial()">Save Special</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Dish Modal -->
+<div class="modal-overlay" id="modal-add-dish">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Menu Dish</div>
+      <button class="modal-close" onclick="closeModal('modal-add-dish')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Dish Name (EN)</label>
+          <input class="form-input" id="dish-name-en" placeholder="e.g. Chicken Marsala">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dish Name (ES)</label>
+          <input class="form-input" id="dish-name-es" placeholder="e.g. Pollo Marsala">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Station</label>
+          <input class="form-input" id="dish-station" placeholder="Sauté, Grill...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Menu Price ($)</label>
+          <input class="form-input" id="dish-price" type="number" step="0.01" placeholder="0.00">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Target Food Cost %</label>
+          <input class="form-input" id="dish-target-fc" placeholder="e.g. 28%">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <input class="form-input" id="dish-notes" placeholder="Optional...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Procedure (EN)</label>
+        <textarea class="form-textarea" id="dish-proc-en" placeholder="Step by step in English..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Procedure (ES)</label>
+        <textarea class="form-textarea" id="dish-proc-es" placeholder="Procedimiento en español..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-dish')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDish()">Save Dish</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Batch Modal -->
+<div class="modal-overlay" id="modal-add-batch">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Batch Recipe</div>
+      <button class="modal-close" onclick="closeModal('modal-add-batch')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Recipe Name (EN)</label>
+          <input class="form-input" id="batch-name-en" placeholder="e.g. Marinara Sauce">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Recipe Name (ES)</label>
+          <input class="form-input" id="batch-name-es" placeholder="e.g. Salsa Marinara">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Level</label>
+          <select class="form-select" id="batch-level">
+            <option value="L1">L1 — Raw ingredients only</option>
+            <option value="L2">L2 — Includes L1 batch recipes</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Station</label>
+          <input class="form-input" id="batch-station" placeholder="Sauté, Cold...">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Yield Qty</label>
+          <input class="form-input" id="batch-yield-qty" placeholder="e.g. ~5">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Yield Unit</label>
+          <input class="form-input" id="batch-yield-unit" placeholder="qt, oz...">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Portion Size</label>
+          <input class="form-input" id="batch-portion" placeholder="e.g. 6 oz">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Batch Frequency</label>
+          <input class="form-input" id="batch-freq" placeholder="e.g. 1x/week, To Order">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Procedure (EN)</label>
+        <textarea class="form-textarea" id="batch-proc-en" placeholder="Step by step in English..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Procedure (ES)</label>
+        <textarea class="form-textarea" id="batch-proc-es" placeholder="Procedimiento en español..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input class="form-input" id="batch-notes" placeholder="Optional...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-add-batch')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBatch()">Save Batch Recipe</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"><div class="toast-dot"></div><span id="toast-msg"></span></div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────
+const CONFIG = {
+  clientId:   '847014cb-5bd5-4697-b4c7-82844f5d8d02',
+  tenantId:   '3ef82175-3d91-47f8-b55d-2ad5bfbe556f',
+  filePath:   '/From the Boot/From the Boot Menu and Pricing Excel Database.xlsx',
+  scopes:     ['Files.ReadWrite', 'User.Read'],
+};
+
+const msalConfig = {
+  auth: {
+    clientId:   CONFIG.clientId,
+    authority:  `https://login.microsoftonline.com/${CONFIG.tenantId}`,
+    redirectUri: window.location.origin + window.location.pathname,
+  },
+  cache: { cacheLocation: 'sessionStorage' }
+};
+
+let msalInstance, currentAccount, accessToken;
+let lang = 'en';
+let currentIngCategory = 'all';
+let currentSpecialFilter = 'all';
+
+// ── MSAL INIT ──────────────────────────────────────────────────
+async function initMsal() {
+  msalInstance = new msal.PublicClientApplication(msalConfig);
+  await msalInstance.initialize();
+
+  const response = await msalInstance.handleRedirectPromise();
+  if (response) {
+    currentAccount = response.account;
+    msalInstance.setActiveAccount(currentAccount);
+    await afterSignIn();
+    return;
+  }
+
+  const accounts = msalInstance.getAllAccounts();
+  if (accounts.length > 0) {
+    currentAccount = accounts[0];
+    msalInstance.setActiveAccount(currentAccount);
+    await afterSignIn();
+  }
+}
+
+async function signIn() {
+  await msalInstance.loginRedirect({ scopes: CONFIG.scopes });
+}
+
+function signOut() {
+  msalInstance.logoutRedirect();
+}
+
+async function getToken() {
+  try {
+    const res = await msalInstance.acquireTokenSilent({ scopes: CONFIG.scopes, account: currentAccount });
+    return res.accessToken;
+  } catch {
+    const res = await msalInstance.acquireTokenRedirect({ scopes: CONFIG.scopes });
+    return res?.accessToken;
+  }
+}
+
+async function afterSignIn() {
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  accessToken = await getToken();
+  loadDashboard();
+}
+
+// ── GRAPH API ──────────────────────────────────────────────────
+async function graphRequest(endpoint, method = 'GET', body = null) {
+  if (!accessToken) accessToken = await getToken();
+  const opts = {
+    method,
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`https://graph.microsoft.com/v1.0${endpoint}`, opts);
+  if (!res.ok) throw new Error(`Graph API error: ${res.status}`);
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+async function getFileId() {
+  const encoded = encodeURIComponent(CONFIG.filePath);
+  const data = await graphRequest(`/me/drive/root:${encoded}`);
+  return data.id;
+}
+
+async function getSheetRows(sheetName) {
+  try {
+    const fileId = await getFileId();
+    const enc = encodeURIComponent(sheetName);
+    const data = await graphRequest(`/me/drive/items/${fileId}/workbook/worksheets/${enc}/usedRange`);
+    return data.values || [];
+  } catch(e) {
+    console.warn(`Could not load sheet "${sheetName}":`, e);
+    return [];
+  }
+}
+
+async function appendRow(sheetName, values) {
+  setSyncing(true);
+  try {
+    const fileId = await getFileId();
+    const enc = encodeURIComponent(sheetName);
+    const rows = await getSheetRows(sheetName);
+    const nextRow = rows.length + 1;
+    const colCount = values.length;
+    const colLetter = String.fromCharCode(64 + colCount);
+    const range = `A${nextRow}:${colLetter}${nextRow}`;
+    await graphRequest(
+      `/me/drive/items/${fileId}/workbook/worksheets/${enc}/range(address='${range}')`,
+      'PATCH',
+      { values: [values] }
+    );
+    setSyncing(false);
+    showToast('Saved to OneDrive ✓', 'success');
+  } catch(e) {
+    setSyncing(false);
+    showToast('Sync error — check connection', 'error');
+    console.error(e);
+  }
+}
+
+async function updateCell(sheetName, row, col, value) {
+  setSyncing(true);
+  try {
+    const fileId = await getFileId();
+    const enc = encodeURIComponent(sheetName);
+    const colLetter = String.fromCharCode(64 + col);
+    const range = `${colLetter}${row}`;
+    await graphRequest(
+      `/me/drive/items/${fileId}/workbook/worksheets/${enc}/range(address='${range}')`,
+      'PATCH',
+      { values: [[value]] }
+    );
+    setSyncing(false);
+    showToast('Updated ✓', 'success');
+  } catch(e) {
+    setSyncing(false);
+    showToast('Sync error', 'error');
+  }
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────────
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`page-${pageId}`).classList.remove('hidden');
+  document.getElementById(`nav-${pageId}`)?.classList.add('active');
+
+  if (pageId === 'ingredients') loadIngredients();
+  if (pageId === 'batch-l1')    loadBatchL1();
+  if (pageId === 'batch-l2')    loadBatchL2();
+  if (pageId === 'menu')        loadMenu();
+  if (pageId === 'specials')    loadSpecials();
+}
+
+// ── LANGUAGE ───────────────────────────────────────────────────
+function setLang(l) {
+  lang = l;
+  document.getElementById('btn-en').classList.toggle('active', l === 'en');
+  document.getElementById('btn-es').classList.toggle('active', l === 'es');
+
+  document.querySelectorAll('[data-en]').forEach(el => {
+    el.textContent = el.getAttribute(`data-${l}`) || el.getAttribute('data-en');
+  });
+  document.querySelectorAll('.col-label[data-en]').forEach(el => {
+    el.textContent = el.getAttribute(`data-${l}`) || el.getAttribute('data-en');
+  });
+  document.querySelectorAll('.recipe-card').forEach(card => {
+    const nameEl = card.querySelector('.recipe-name');
+    if (nameEl) {
+      nameEl.textContent = nameEl.getAttribute(`data-${l}`) || nameEl.getAttribute('data-en');
+    }
+  });
+  document.querySelectorAll('.procedure-box').forEach(box => {
+    if (l === 'es') {
+      box.querySelector('[data-proc-en]') && (box.style.display = box.classList.contains('es') ? '' : 'none');
+    }
+  });
+  document.querySelectorAll('.proc-en').forEach(el => el.style.display = l === 'en' ? '' : 'none');
+  document.querySelectorAll('.proc-es').forEach(el => el.style.display = l === 'es' ? '' : 'none');
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [ings, l1, l2, menu, specials] = await Promise.all([
+      getSheetRows('Ingredients'),
+      getSheetRows('Batch Recipes L1'),
+      getSheetRows('Batch Recipes L2'),
+      getSheetRows('Menu Dishes'),
+      getSheetRows('Specials'),
+    ]);
+
+    document.getElementById('stat-ingredients').textContent = Math.max(0, ings.length - 4);
+    document.getElementById('stat-l1').textContent = countRecipeHeaders(l1);
+    document.getElementById('stat-l2').textContent = countRecipeHeaders(l2);
+    document.getElementById('stat-menu').textContent = countRecipeHeaders(menu);
+
+    const activeSpecials = specials.slice(3).filter(r => r[12] === 'Active');
+    document.getElementById('stat-specials').textContent = activeSpecials.length;
+
+    const dashSp = document.getElementById('dashboard-specials');
+    if (activeSpecials.length === 0) {
+      dashSp.innerHTML = '<div style="padding:20px;text-align:center;color:var(--ink-soft);font-size:13px;">No active specials</div>';
+    } else {
+      dashSp.innerHTML = activeSpecials.slice(0, 4).map(r => `
+        <div class="special-pill">
+          <div>
+            <div class="special-pill-name">${r[1] || ''}</div>
+            <div class="special-pill-dates">${r[13] || ''}</div>
+          </div>
+          <div class="badge badge-active">Active</div>
+        </div>`).join('');
+    }
+  } catch(e) {
+    console.error('Dashboard load error:', e);
+  }
+}
+
+function countRecipeHeaders(rows) {
+  return rows.slice(5).filter(r => r[0] && String(r[0]).match(/^[A-Z]{1,2}\d+-\d+$|^(L[12]-|MD-|SP-)\d+/)).length;
+}
+
+// ── INGREDIENTS ────────────────────────────────────────────────
+let allIngredients = [];
+
+async function loadIngredients() {
+  document.getElementById('ingredients-loading').style.display = 'flex';
+  document.getElementById('ingredients-table').style.display = 'none';
+  try {
+    const rows = await getSheetRows('Ingredients');
+    allIngredients = rows.slice(4).filter(r => r[1]);
+    renderIngredients(allIngredients);
+  } catch(e) {
+    showToast('Could not load ingredients', 'error');
+  }
+  document.getElementById('ingredients-loading').style.display = 'none';
+  document.getElementById('ingredients-table').style.display = 'table';
+}
+
+function renderIngredients(ings) {
+  const tbody = document.getElementById('ingredients-tbody');
+  if (ings.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--ink-soft);">No ingredients found. Add your first ingredient above.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = ings.map((r, i) => `
+    <tr>
+      <td style="color:var(--ink-soft);font-size:12px;">${r[0] || i+1}</td>
+      <td><strong>${lang === 'en' ? r[1] : (r[2] || r[1])}</strong></td>
+      <td><span style="font-size:12px;color:var(--ink-soft);">${r[3] || ''}</span></td>
+      <td><span style="font-family:'DM Mono',monospace;font-size:12px;">${r[4] || ''}</span></td>
+      <td class="cost-cell">${r[5] ? '$' + Number(r[5]).toFixed(3) : '<span style="color:var(--ink-soft);font-size:12px;">—</span>'}</td>
+      <td style="font-size:13px;">${r[7] || ''}</td>
+      <td style="font-size:12px;color:var(--ink-soft);">${r[8] || ''}</td>
+      <td><span class="badge ${r[9]==='Yes'?'badge-active':'badge-inactive'}">${r[9] || 'Yes'}</span></td>
+      <td><div class="action-btns">
+        <button class="icon-btn" title="Edit" onclick="editIngredient(${i})">✏️</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function filterIngredients(q) {
+  const filtered = allIngredients.filter(r =>
+    (r[1]||'').toLowerCase().includes(q.toLowerCase()) ||
+    (r[2]||'').toLowerCase().includes(q.toLowerCase()) ||
+    (r[3]||'').toLowerCase().includes(q.toLowerCase())
+  );
+  renderIngredients(filtered);
+}
+
+function filterIngCategory(cat, el) {
+  document.querySelectorAll('#ing-category-filters .filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentIngCategory = cat;
+  const filtered = cat === 'all' ? allIngredients : allIngredients.filter(r => r[3] === cat);
+  renderIngredients(filtered);
+}
+
+async function saveIngredient() {
+  const nameEn   = document.getElementById('ing-name-en').value.trim();
+  const nameEs   = document.getElementById('ing-name-es').value.trim();
+  const category = document.getElementById('ing-category').value;
+  const unit     = document.getElementById('ing-unit').value.trim();
+  const cost     = document.getElementById('ing-cost').value;
+  const supplier = document.getElementById('ing-supplier').value.trim();
+  const notes    = document.getElementById('ing-notes').value.trim();
+
+  if (!nameEn) { showToast('Please enter an ingredient name', 'error'); return; }
+
+  const today = new Date().toLocaleDateString();
+  const rowNum = allIngredients.length + 1;
+  const values = [rowNum, nameEn, nameEs, category, unit, cost ? Number(cost) : '', '', supplier, today, 'Yes', notes];
+
+  closeModal('modal-add-ingredient');
+  await appendRow('Ingredients', values);
+  loadIngredients();
+}
+
+// ── RECIPE CARD RENDERER ───────────────────────────────────────
+function renderRecipeCard(id, nameEn, nameEs, station, yieldQty, yieldUnit,
+                           portion, freq, ingredients, procEn, procEs,
+                           isSpecial = false, status = '', dates = '', chefNotes = '',
+                           menuPrice = '', portionCost = '', targetFC = '') {
+
+  const displayName = lang === 'en' ? nameEn : (nameEs || nameEn);
+
+  let fcHtml = '';
+  if (menuPrice && portionCost) {
+    const fc = (portionCost / menuPrice * 100).toFixed(1);
+    const fcClass = fc < 28 ? 'fc-good' : fc < 35 ? 'fc-warn' : 'fc-bad';
+    fcHtml = `
+      <div style="display:flex;gap:16px;margin-top:14px;padding:12px 14px;background:var(--cream);border-radius:8px;">
+        <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-soft);">Menu Price</div><div class="price-cell" style="font-size:16px;">$${Number(menuPrice).toFixed(2)}</div></div>
+        <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-soft);">Portion Cost</div><div class="cost-cell" style="font-size:16px;">$${Number(portionCost).toFixed(2)}</div></div>
+        <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-soft);">Food Cost %</div><div class="fc-cell ${fcClass}" style="font-size:16px;">${fc}%</div></div>
+        <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-soft);">Target FC%</div><div style="font-family:'DM Mono',monospace;font-size:16px;color:var(--ink-soft);">${targetFC}</div></div>
+      </div>`;
+  }
+
+  const ingRows = (ingredients || []).map(ing => `
+    <tr>
+      <td>${lang === 'en' ? ing.en : (ing.es || ing.en)}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;">${ing.amount || ''}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;">${ing.unit || ''}</td>
+      <td><span class="source-tag">${ing.source || ''}</span></td>
+    </tr>`).join('');
+
+  const specialExtra = isSpecial ? `
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+      <span class="badge badge-${(status||'active').toLowerCase()}">${status}</span>
+      ${dates ? `<span style="font-size:12px;color:var(--ink-soft);">📅 ${dates}</span>` : ''}
+      ${chefNotes ? `<span style="font-size:12px;color:var(--ink-soft);">💬 ${chefNotes}</span>` : ''}
+    </div>` : '';
+
+  return `
+    <div class="recipe-card">
+      <div class="recipe-card-header ${isSpecial ? 'special-hdr' : ''}" onclick="toggleRecipe(this)">
+        <div>
+          <div class="recipe-name" data-en="${nameEn}" data-es="${nameEs || nameEn}">${displayName}</div>
+          <div class="recipe-meta">${station || ''} · Yield: ${yieldQty || ''} ${yieldUnit || ''} · ${freq || ''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          ${portionCost ? `<div class="recipe-cost-badge"><div class="cost-label">Cost/Portion</div><div class="cost-val">$${Number(portionCost).toFixed(2)}</div></div>` : ''}
+          <div style="color:rgba(255,255,255,0.5);font-size:20px;">▾</div>
+        </div>
+      </div>
+      <div class="recipe-body">
+        ${specialExtra}
+        ${fcHtml}
+        ${ingRows ? `
+        <table class="ing-table" style="margin-top:${fcHtml || specialExtra ? '14px':'0'};">
+          <thead><tr>
+            <th>${lang==='en'?'Ingredient':'Ingrediente'}</th>
+            <th>Amount</th><th>Unit</th><th>Source</th>
+          </tr></thead>
+          <tbody>${ingRows}</tbody>
+        </table>` : ''}
+        ${procEn ? `<div class="procedure-box proc-en" style="display:${lang==='es'?'none':''};">
+          <div class="procedure-label">Procedure</div>
+          <div class="procedure-text">${procEn}</div>
+        </div>` : ''}
+        ${procEs ? `<div class="procedure-box es proc-es" style="display:${lang==='en'?'none':''};">
+          <div class="procedure-label">Procedimiento</div>
+          <div class="procedure-text">${procEs}</div>
+        </div>` : ''}
+      </div>
+    </div>`;
+}
+
+function toggleRecipe(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+  const arrow = header.querySelector('div:last-child div:last-child');
+  if (arrow) arrow.textContent = body.classList.contains('open') ? '▴' : '▾';
+}
+
+// ── BATCH L1 ───────────────────────────────────────────────────
+async function loadBatchL1() {
+  document.getElementById('batch-l1-loading').style.display = 'flex';
+  document.getElementById('batch-l1-list').innerHTML = '';
+  try {
+    const rows = await getSheetRows('Batch Recipes L1');
+    document.getElementById('batch-l1-list').innerHTML = parseAndRenderRecipes(rows, false);
+  } catch(e) { showToast('Could not load batch recipes', 'error'); }
+  document.getElementById('batch-l1-loading').style.display = 'none';
+}
+
+async function loadBatchL2() {
+  document.getElementById('batch-l2-loading').style.display = 'flex';
+  document.getElementById('batch-l2-list').innerHTML = '';
+  try {
+    const rows = await getSheetRows('Batch Recipes L2');
+    document.getElementById('batch-l2-list').innerHTML = parseAndRenderRecipes(rows, false);
+  } catch(e) { showToast('Could not load batch recipes', 'error'); }
+  document.getElementById('batch-l2-loading').style.display = 'none';
+}
+
+async function loadMenu() {
+  document.getElementById('menu-loading').style.display = 'flex';
+  document.getElementById('menu-list').innerHTML = '';
+  try {
+    const rows = await getSheetRows('Menu Dishes');
+    document.getElementById('menu-list').innerHTML = parseAndRenderRecipes(rows, true);
+  } catch(e) { showToast('Could not load menu', 'error'); }
+  document.getElementById('menu-loading').style.display = 'none';
+}
+
+function parseAndRenderRecipes(rows, isMenu) {
+  if (!rows || rows.length <= 5) return `<div class="empty-state"><div class="empty-icon">📋</div><h3>No recipes yet</h3><p>Add your first recipe using the button above.</p></div>`;
+
+  const dataRows = rows.slice(5);
+  let cards = '';
+  let currentRecipe = null;
+  let currentIngredients = [];
+  let procEn = '', procEs = '';
+
+  const flush = () => {
+    if (!currentRecipe) return;
+    cards += renderRecipeCard(
+      currentRecipe[0], currentRecipe[1], currentRecipe[2], currentRecipe[3],
+      currentRecipe[4], currentRecipe[5], currentRecipe[6], currentRecipe[8],
+      currentIngredients, procEn, procEs,
+      false, '', '', '',
+      isMenu ? currentRecipe[6] : '',
+      isMenu ? currentRecipe[7] : '',
+      isMenu ? currentRecipe[9] : ''
+    );
+    currentRecipe = null; currentIngredients = []; procEn = ''; procEs = '';
+  };
+
+  for (const row of dataRows) {
+    if (!row || row.every(c => !c)) continue;
+    const id = String(row[0] || '');
+
+    if (id.match(/^(L[12]-|MD-)\d+/) || (row[1] && !row[0] && row[3] && row[4])) {
+      flush();
+      currentRecipe = row;
+    } else if (row[0] === '' && row[1] && String(row[1]).startsWith('Procedure')) {
+      // skip label col
+    } else if (row[0] === '' && row[1] && String(row[1]).toLowerCase().includes('procedure')) {
+      procEn = row[2] || '';
+    } else if (row[0] === '' && row[1] && String(row[1]).toLowerCase().includes('procedimiento')) {
+      procEs = row[2] || '';
+    } else if (currentRecipe && row[1]) {
+      currentIngredients.push({ en: row[1], es: row[2], source: row[3], amount: row[4], unit: row[5] });
+    }
+  }
+  flush();
+  return cards || `<div class="empty-state"><div class="empty-icon">🍝</div><h3>No recipes found</h3><p>Start adding recipes from your recipe cards.</p></div>`;
+}
+
+function filterMenu(q) {
+  document.querySelectorAll('#menu-list .recipe-card').forEach(card => {
+    const name = (card.querySelector('.recipe-name')?.textContent || '').toLowerCase();
+    card.style.display = name.includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+// ── SPECIALS ───────────────────────────────────────────────────
+let allSpecialsRows = [];
+
+async function loadSpecials() {
+  document.getElementById('specials-loading').style.display = 'flex';
+  document.getElementById('specials-list').innerHTML = '';
+  try {
+    const rows = await getSheetRows('Specials');
+    allSpecialsRows = rows.slice(5).filter(r => r[1]);
+    renderSpecials(allSpecialsRows);
+  } catch(e) { showToast('Could not load specials', 'error'); }
+  document.getElementById('specials-loading').style.display = 'none';
+}
+
+function renderSpecials(rows) {
+  if (rows.length === 0) {
+    document.getElementById('specials-list').innerHTML = `<div class="empty-state"><div class="empty-icon">⭐</div><h3>No specials yet</h3><p>Add your first special using the button above.<br>Specials can be active, seasonal, or archived and brought back any time.</p></div>`;
+    return;
+  }
+  document.getElementById('specials-list').innerHTML = rows.map(r =>
+    renderRecipeCard(
+      r[0], r[1], r[2], r[3], r[4], r[5], r[6], '',
+      [], r[/* proc col */0], '',
+      true, r[12], r[13], r[14],
+      r[6], r[7], r[9]
+    )
+  ).join('');
+}
+
+function filterSpecials(status, el) {
+  document.querySelectorAll('.filter-tab.purple').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentSpecialFilter = status;
+  const filtered = status === 'all' ? allSpecialsRows : allSpecialsRows.filter(r => r[12] === status);
+  renderSpecials(filtered);
+}
+
+async function saveSpecial() {
+  const nameEn   = document.getElementById('sp-name-en').value.trim();
+  const nameEs   = document.getElementById('sp-name-es').value.trim();
+  const station  = document.getElementById('sp-station').value.trim();
+  const status   = document.getElementById('sp-status').value;
+  const price    = document.getElementById('sp-price').value;
+  const targetFC = document.getElementById('sp-target-fc').value.trim();
+  const start    = document.getElementById('sp-start').value;
+  const end      = document.getElementById('sp-end').value;
+  const notes    = document.getElementById('sp-notes').value.trim();
+  const procEn   = document.getElementById('sp-proc-en').value.trim();
+  const procEs   = document.getElementById('sp-proc-es').value.trim();
+
+  if (!nameEn) { showToast('Please enter a dish name', 'error'); return; }
+
+  const spNum = (allSpecialsRows.length + 1).toString().padStart(3, '0');
+  const spId  = `SP-${spNum}`;
+  const dates = start && end ? `${start} – ${end}` : (start || '');
+  const values = [spId, nameEn, nameEs, station, 1, 'portion',
+                  price ? Number(price) : '', '', '', targetFC, '', '',
+                  status, dates, notes];
+
+  closeModal('modal-add-special');
+  await appendRow('Specials', values);
+  loadSpecials();
+}
+
+async function saveDish() {
+  const nameEn   = document.getElementById('dish-name-en').value.trim();
+  const nameEs   = document.getElementById('dish-name-es').value.trim();
+  const station  = document.getElementById('dish-station').value.trim();
+  const price    = document.getElementById('dish-price').value;
+  const targetFC = document.getElementById('dish-target-fc').value.trim();
+  const notes    = document.getElementById('dish-notes').value.trim();
+
+  if (!nameEn) { showToast('Please enter a dish name', 'error'); return; }
+
+  const values = ['MD-NEW', nameEn, nameEs, station, 1, 'portion',
+                  price ? Number(price) : '', '', '', targetFC, '', '', notes];
+
+  closeModal('modal-add-dish');
+  await appendRow('Menu Dishes', values);
+  showToast('Dish added — add ingredients next', 'success');
+  loadMenu();
+}
+
+async function saveBatch() {
+  const nameEn  = document.getElementById('batch-name-en').value.trim();
+  const nameEs  = document.getElementById('batch-name-es').value.trim();
+  const level   = document.getElementById('batch-level').value;
+  const station = document.getElementById('batch-station').value.trim();
+  const yQty    = document.getElementById('batch-yield-qty').value.trim();
+  const yUnit   = document.getElementById('batch-yield-unit').value.trim();
+  const portion = document.getElementById('batch-portion').value.trim();
+  const freq    = document.getElementById('batch-freq').value.trim();
+  const notes   = document.getElementById('batch-notes').value.trim();
+
+  if (!nameEn) { showToast('Please enter a recipe name', 'error'); return; }
+
+  const prefix = level === 'L1' ? 'L1' : 'L2';
+  const values = [`${prefix}-NEW`, nameEn, nameEs, station, yQty, yUnit, portion, 'oz', freq, '', '', notes];
+  const sheet  = level === 'L1' ? 'Batch Recipes L1' : 'Batch Recipes L2';
+
+  closeModal('modal-add-batch');
+  await appendRow(sheet, values);
+  showToast('Batch recipe added', 'success');
+  if (level === 'L1') loadBatchL1(); else loadBatchL2();
+}
+
+function editIngredient(idx) {
+  showToast('Edit mode coming in next update', 'success');
+}
+
+// ── MODALS ─────────────────────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// ── TOAST ──────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.className = `show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ── SYNC INDICATOR ─────────────────────────────────────────────
+function setSyncing(syncing) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  if (syncing) {
+    el.className = 'sync-badge syncing';
+    el.innerHTML = '<div class="sync-dot"></div> Syncing...';
+  } else {
+    el.className = 'sync-badge';
+    el.innerHTML = '<div class="sync-dot"></div> Synced';
+  }
+}
+
+// ── BOOT ───────────────────────────────────────────────────────
+initMsal().catch(console.error);
+</script>
+</body>
+</html>
