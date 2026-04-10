@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>From the Boot — Kitchen Database</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-authentication-library-for-js/2.38.0/msal-browser.min.js"></script>
+<script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
 <style>
   :root {
     --red:        #8B0000;
@@ -982,7 +982,7 @@ const msalConfig = {
   auth: {
     clientId:   CONFIG.clientId,
     authority:  `https://login.microsoftonline.com/${CONFIG.tenantId}`,
-    redirectUri: window.location.origin + window.location.pathname,
+    redirectUri: "https://FromtheBoot-Admin.github.io/kitchen/",
   },
   cache: { cacheLocation: 'sessionStorage' }
 };
