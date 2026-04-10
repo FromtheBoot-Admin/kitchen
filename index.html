@@ -310,6 +310,67 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 /* ── DASH LAYOUT ── */
 .dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;}
 @media(max-width:900px){.dash-grid{grid-template-columns:1fr;}}
+
+/* ── VIEW/EDIT TOGGLE ── */
+.edit-toggle{display:flex;align-items:center;gap:7px;padding:6px 12px;
+  border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--cream);
+  font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;
+  color:var(--ink3);transition:all 0.15s;}
+.edit-toggle:hover{border-color:var(--accent);color:var(--accent);}
+.edit-toggle.edit-on{background:rgba(212,160,23,0.12);border-color:var(--gold);color:#7a5a00;}
+.edit-lock{font-size:14px;}
+
+/* ── RECIPE ACTION BUTTONS ── */
+.rc-actions{display:flex;gap:7px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);}
+.rc-act-btn{padding:6px 13px;border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;
+  font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid;transition:all 0.14s;
+  display:inline-flex;align-items:center;gap:5px;}
+.btn-print{border-color:var(--ink3);color:var(--ink3);background:var(--cream);}
+.btn-print:hover{border-color:var(--ink);color:var(--ink);background:var(--cream2);}
+.btn-cost{border-color:var(--green);color:var(--green);background:var(--green-bg);}
+.btn-cost:hover{background:rgba(46,125,50,0.15);}
+.btn-edit-item{border-color:var(--gold);color:#7a5a00;background:rgba(212,160,23,0.08);}
+.btn-edit-item:hover{background:rgba(212,160,23,0.15);}
+
+/* ── COST CARD MODAL ── */
+.cc-table{width:100%;border-collapse:collapse;font-size:13px;}
+.cc-table th{background:#E8F0E0;padding:7px 10px;font-size:10px;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;color:var(--ink2);border:1px solid #C8D8B8;text-align:left;}
+.cc-table td{padding:7px 10px;border:1px solid #D8E8C8;vertical-align:middle;}
+.cc-table tr:nth-child(odd) td{background:#F4FAF0;}
+.cc-table tr:nth-child(even) td{background:#EDFAE5;}
+.cc-totals{margin-top:0;width:100%;border-collapse:collapse;}
+.cc-totals td{padding:7px 10px;font-size:13px;border:1px solid #C8A000;}
+.cc-totals .cc-lbl{background:#E8C000;font-weight:700;color:var(--navy);width:60%;}
+.cc-totals .cc-val{background:#F5D800;font-weight:700;color:var(--navy);font-family:'DM Mono',monospace;}
+.cc-header{background:linear-gradient(135deg,#1B2A3B,#0D1B2A);color:white;
+  padding:14px 18px;border-radius:var(--r-sm) var(--r-sm) 0 0;margin-bottom:0;}
+.cc-item-name{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;}
+.cc-item-desc{font-size:12px;color:rgba(255,255,255,0.6);margin-top:3px;}
+
+/* ── PRINT STYLES ── */
+@media print {
+  #sidebar,#main .topbar,.rc-actions,button,.overlay,#toast{display:none!important;}
+  #print-area{display:block!important;}
+  body{background:white;}
+  * {-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+#print-area{display:none;}
+
+/* ── FOOD COST DASHBOARD ── */
+.fc-dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.fc-gauge{text-align:center;padding:20px;}
+.fc-gauge-val{font-family:'Playfair Display',serif;font-size:48px;font-weight:900;line-height:1;}
+.fc-gauge-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink3);margin-top:4px;}
+.fc-rank-row{display:flex;align-items:center;justify-content:space-between;
+  padding:9px 14px;border-bottom:1px solid var(--border);}
+.fc-rank-row:last-child{border-bottom:none;}
+.fc-rank-name{font-size:13px;font-weight:500;}
+.fc-rank-pct{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;}
+.fc-bar-bg{width:100%;height:6px;background:var(--cream2);border-radius:3px;margin-top:5px;}
+.fc-bar-fill{height:6px;border-radius:3px;background:var(--green);}
+.fc-bar-fill.warn{background:var(--amber);}
+.fc-bar-fill.bad{background:var(--red);}
 </style>
 </head>
 <body>
@@ -317,7 +378,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 <!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-wrap">
-    <div class="auth-logo">from the <em>boot</em></div>
+    <div style="display:flex;justify-content:center;margin-bottom:6px;">
+      <svg viewBox="0 0 190 68" xmlns="http://www.w3.org/2000/svg" style="width:190px;display:block;margin:0 auto;">
+        <text x="1" y="50" font-family="Arial Black,Arial,sans-serif" font-size="48" font-weight="900" fill="#E8920A">b</text>
+        <circle cx="88" cy="30" r="27" fill="white" stroke="#8B7355" stroke-width="2.8"/>
+        <circle cx="88" cy="30" r="17" fill="none" stroke="#9E8A6E" stroke-width="2"/>
+        <circle cx="138" cy="7" r="10" fill="white" stroke="#E8920A" stroke-width="2.2"/>
+        <circle cx="138" cy="7" r="4.5" fill="#7A6B58"/>
+        <text x="129" y="50" font-family="Arial Black,Arial,sans-serif" font-size="48" font-weight="900" fill="#8B1A2B">T</text>
+        <text x="95" y="64" font-family="Arial,sans-serif" font-size="7.5" font-weight="700" fill="#90A4AE" letter-spacing="2" text-anchor="middle">FROM THE BOOT RESTAURANT</text>
+      </svg>
+    </div>
     <span class="auth-tag">Kitchen Database</span>
     <div class="auth-desc">Sign in with your From the Boot Google account to access the recipe and ingredient database.</div>
     <button class="auth-btn" onclick="signIn()">
@@ -331,9 +402,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 <!-- APP -->
 <div id="app" class="hidden">
   <div id="sidebar">
-    <div class="sb-brand">
-      <div class="sb-name">from the <em>boot</em></div>
-      <div class="sb-sub">Kitchen Database</div>
+    <div class="sb-brand" style="padding:14px 16px 12px;">
+      <svg viewBox="0 0 155 52" xmlns="http://www.w3.org/2000/svg" style="width:138px;display:block;">
+        <text x="1" y="38" font-family="Arial Black,Arial,sans-serif" font-size="36" font-weight="900" fill="#E8920A">b</text>
+        <circle cx="68" cy="22" r="21" fill="white" stroke="#8B7355" stroke-width="2.2"/>
+        <circle cx="68" cy="22" r="13" fill="none" stroke="#9E8A6E" stroke-width="1.6"/>
+        <circle cx="108" cy="5" r="7.5" fill="white" stroke="#E8920A" stroke-width="1.8"/>
+        <circle cx="108" cy="5" r="3.5" fill="#7A6B58"/>
+        <text x="100" y="38" font-family="Arial Black,Arial,sans-serif" font-size="36" font-weight="900" fill="#8B1A2B">T</text>
+        <text x="68" y="49" font-family="Arial,sans-serif" font-size="5.8" font-weight="700" fill="#607D8B" letter-spacing="1.5" text-anchor="middle">FROM THE BOOT RESTAURANT</text>
+      </svg>
+      <div style="font-size:8.5px;color:rgba(144,164,174,0.45);letter-spacing:2.2px;text-transform:uppercase;margin-top:3px;">Kitchen Database</div>
     </div>
 
     <button class="sb-translate" id="trans-btn" onclick="toggleTranslate()">
@@ -349,6 +428,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
     <button class="nav-btn" onclick="nav('prep')" id="nav-prep"><span class="ni">🔧</span>Prep Recipes</button>
     <button class="nav-btn" onclick="nav('bar')" id="nav-bar"><span class="ni">🍸</span>Bar Recipes</button>
 
+    <div class="sb-section">Analytics</div>
+    <button class="nav-btn" onclick="nav('fc-dashboard')" id="nav-fc-dashboard"><span class="ni">📊</span>Food Cost Dashboard</button>
     <div class="sb-section">Menu</div>
     <button class="nav-btn" onclick="nav('shared')" id="nav-shared"><span class="ni">🦪</span>Shared Plates</button>
     <button class="nav-btn" onclick="nav('pasta')" id="nav-pasta"><span class="ni">🍝</span>Pasta</button>
@@ -371,7 +452,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
     <div id="pg-dashboard" class="page">
       <div class="topbar">
         <div class="pg-title">Dashboard</div>
-        <div class="tb-right"><div class="sync-pill" id="sync"><div class="sync-dot"></div>Synced</div></div>
+        <div class="tb-right"><div class="sync-pill" id="sync"><div class="sync-dot"></div>Synced</div>
+          <button class="edit-toggle" id="edit-toggle-btn" onclick="toggleEdit()"><span class="edit-lock">🔒</span><span id="edit-lbl">View Only</span></button></div>
       </div>
       <div class="content">
         <div class="stats-grid">
@@ -571,6 +653,70 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
       </div>
     </div>
 
+
+    <!-- FOOD COST DASHBOARD -->
+    <div id="pg-fc-dashboard" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title">📊 Food Cost Dashboard</div>
+        <div class="tb-right">
+          <div class="sync-pill"><div class="sync-dot"></div>Live from Recipes</div>
+        </div>
+      </div>
+      <div class="content">
+        <div id="fc-dash-loading" class="loading"><div class="spinner"></div><span>Calculating costs...</span></div>
+        <div id="fc-dash-content" style="display:none">
+          <div class="fc-dashboard-grid">
+            <div class="card">
+              <div class="card-hdr"><div class="card-title">Overall Food Cost %</div></div>
+              <div class="fc-gauge">
+                <div class="fc-gauge-val fc-good" id="fc-overall">—</div>
+                <div class="fc-gauge-lbl">Avg across all priced recipes</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-hdr"><div class="card-title">Category Breakdown</div></div>
+              <div id="fc-by-cat" style="padding:8px 0;"></div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="card">
+              <div class="card-hdr"><div class="card-title">🏆 Best Margins</div><span style="font-size:11px;color:var(--ink3)">Lowest food cost %</span></div>
+              <div id="fc-best"></div>
+            </div>
+            <div class="card">
+              <div class="card-hdr"><div class="card-title">⚠️ Needs Attention</div><span style="font-size:11px;color:var(--ink3)">Highest food cost %</span></div>
+              <div id="fc-worst"></div>
+            </div>
+          </div>
+          <div style="margin-top:16px;" class="card">
+            <div class="card-hdr"><div class="card-title">All Recipes — Cost Analysis</div><span style="font-size:11px;color:var(--ink3)">Only shows recipes with prices entered</span></div>
+            <table class="tbl" id="fc-all-table">
+              <thead><tr><th>Recipe</th><th>Category</th><th>Menu Price</th><th>Portion Cost</th><th>Food Cost %</th><th>Margin</th><th>Target FC%</th><th>Status</th></tr></thead>
+              <tbody id="fc-all-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRINT AREA (hidden, shown only on print) -->
+    <div id="print-area">
+      <div id="print-content"></div>
+    </div>
+
+    <!-- COST CARD MODAL -->
+    <div class="overlay" id="m-cost-card">
+      <div class="modal" style="max-width:640px;">
+        <div class="m-hdr">
+          <div class="m-title">💰 Cost Card</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-ghost btn-sm" onclick="printCostCard()">🖨️ Print</button>
+            <button class="m-close" onclick="closeM('m-cost-card')">×</button>
+          </div>
+        </div>
+        <div class="m-body" id="cost-card-body" style="padding:0;"></div>
+      </div>
+    </div>
   </div><!-- /main -->
 </div><!-- /app -->
 
@@ -882,7 +1028,7 @@ async function saveBevIng(){
 }
 
 // ── RECIPE CARD ─────────────────────────────────────
-function buildCard(name, category, station, yQty, yUnit, portion, freq,
+function buildCard_OLD(name, category, station, yQty, yUnit, portion, freq,
                     comps, procTxt, price, cost, targetFC, hdrCls='', tags='',
                     status='', dates='', chefNotes=''){
   const fcPct = price&&cost ? (cost/price*100).toFixed(1) : null;
@@ -1090,6 +1236,366 @@ function setSyncing(s){
   if(!el) return;
   el.className=s?'sync-pill syncing':'sync-pill';
   el.innerHTML=`<div class="sync-dot"></div>${s?'Syncing...':'Synced'}`;
+}
+
+
+// ── EDIT MODE ───────────────────────────────────────────────────
+let editMode = false;
+function toggleEdit(){
+  editMode = !editMode;
+  const btn = document.getElementById('edit-toggle-btn');
+  const lbl = document.getElementById('edit-lbl');
+  if(editMode){
+    btn.classList.add('edit-on');
+    btn.querySelector('.edit-lock').textContent = '🔓';
+    lbl.textContent = 'Editing';
+    toast('Edit mode ON — changes will save to Google Sheets','success');
+  } else {
+    btn.classList.remove('edit-on');
+    btn.querySelector('.edit-lock').textContent = '🔒';
+    lbl.textContent = 'View Only';
+    toast('Edit mode OFF — database is locked','success');
+  }
+  // Show/hide edit buttons on all open recipe cards
+  document.querySelectorAll('.btn-edit-item').forEach(b => {
+    b.style.display = editMode ? 'inline-flex' : 'none';
+  });
+}
+
+// ── BUILD RECIPE CARD (updated with action buttons) ─────────────
+function buildCard(name, category, station, yQty, yUnit, portion, freq,
+                    comps, procTxt, price, cost, targetFC, hdrCls='', tags='',
+                    status='', dates='', chefNotes='', recipeId=''){
+  const fcPct = price&&cost ? (cost/price*100).toFixed(1) : null;
+  const fcCls = fcPct ? (fcPct<28?'fc-good':fcPct<35?'fc-warn':'fc-bad') : '';
+
+  const tagsHtml = (tags||'').split(' ').filter(Boolean).map(t=>{
+    if(t==='GF') return '<span class="badge b-gf">GF</span>';
+    if(t==='V')  return '<span class="badge b-v">V</span>';
+    if(t==='GFA')return '<span class="badge b-gf" style="opacity:.7">GFA</span>';
+    if(t==='L')  return '<span class="badge b-l">Lunch</span>';
+    if(t==='D')  return '<span class="badge b-d">Dinner</span>';
+    return '';
+  }).join(' ');
+
+  const spMeta = status ? `<div style="display:flex;gap:7px;align-items:center;margin-bottom:9px;flex-wrap:wrap">
+    <span class="badge b-${status.toLowerCase()}">${status}</span>
+    ${dates?`<span style="font-size:11px;color:var(--ink3)">📅 ${dates}</span>`:''}
+    ${chefNotes?`<span style="font-size:11px;color:var(--ink3)">💬 ${chefNotes}</span>`:''}
+  </div>` : '';
+
+  const fcRow = (price||cost) ? `<div class="fc-row">
+    ${price?`<div class="fc-item"><div class="fc-lbl">Menu Price</div><div class="fc-val price">$${Number(price).toFixed(2)}</div></div>`:''}
+    ${cost?`<div class="fc-item"><div class="fc-lbl">Portion Cost</div><div class="fc-val cost">$${Number(cost).toFixed(2)}</div></div>`:''}
+    ${fcPct?`<div class="fc-item"><div class="fc-lbl">Food Cost %</div><div class="fc-val ${fcCls}">${fcPct}%</div></div>`:''}
+    ${targetFC?`<div class="fc-item"><div class="fc-lbl">Target FC%</div><div class="fc-val" style="color:var(--ink3)">${targetFC}</div></div>`:''}
+  </div>` : '';
+
+  const compsHtml = comps&&comps.length ? `<table class="comp-table">
+    <thead><tr><th>Component</th><th>Amount</th><th>Unit</th><th>Source</th></tr></thead>
+    <tbody>${comps.map(c=>`<tr><td>${c[0]||''}</td><td class="mono">${c[1]||''}</td><td class="mono">${c[2]||''}</td><td><span class="src-tag">${c[3]||''}</span></td></tr>`).join('')}</tbody>
+  </table>` : '';
+
+  const procHtml = procTxt&&!procTxt.includes('[Enter') ? `<div class="proc-block">
+    <div class="proc-lbl">Procedure</div><div class="proc-txt">${procTxt}</div>
+  </div>` : '';
+
+  const meta = [category,station,yQty&&yUnit?`Yield: ${yQty} ${yUnit}`:'',freq].filter(Boolean).join(' · ');
+
+  // Encode recipe data for buttons
+  const rd = encodeURIComponent(JSON.stringify({name,category,station,yQty,yUnit,portion,freq,comps,procTxt,price,cost,targetFC,tags}));
+
+  const actionBtns = `<div class="rc-actions">
+    <button class="rc-act-btn btn-print" onclick="printRecipeCard(${rd})">🖨️ Print Recipe Card</button>
+    <button class="rc-act-btn btn-cost" onclick="openCostCard(${rd})">💰 Cost Card</button>
+    <button class="rc-act-btn btn-edit-item" style="display:${editMode?'inline-flex':'none'}" onclick="toast('Edit via Google Sheets for now — full inline editing coming soon','success')">✏️ Edit Recipe</button>
+  </div>`;
+
+  return `<div class="rc">
+    <div class="rc-hdr ${hdrCls}" onclick="toggleRc(this)">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+          <div class="rc-name">${name}</div>${tagsHtml}
+        </div>
+        <div class="rc-meta">${meta}</div>
+      </div>
+      ${cost?`<div class="rc-cost"><div class="rc-cost-lbl">Cost/Portion</div><div class="rc-cost-val">$${Number(cost).toFixed(2)}</div></div>`:''}
+      <div class="rc-arrow">▾</div>
+    </div>
+    <div class="rc-body">${spMeta}${fcRow}${compsHtml}${procHtml}${actionBtns}</div>
+  </div>`;
+}
+
+// ── PRINT RECIPE CARD ────────────────────────────────────────────
+function printRecipeCard(rdEncoded){
+  const r = JSON.parse(decodeURIComponent(rdEncoded));
+  const ingRows = (r.comps||[]).map(c=>`
+    <tr>
+      <td>${c[1]||''}</td>
+      <td>${c[2]||''}</td>
+      <td>${c[0]||''}</td>
+    </tr>`).join('');
+
+  const html = `
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;600&display=swap');
+      body{font-family:'DM Sans',Arial,sans-serif;margin:0;padding:0;background:white;}
+      .rc-print{width:680px;margin:24px auto;border:2px solid #1B2A3B;border-radius:8px;overflow:hidden;font-size:13px;}
+      .rc-print-hdr{background:#1B2A3B;color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;}
+      .rc-print-hdr .logo-b{font-size:28px;font-weight:900;color:#E8920A;font-family:Arial Black,sans-serif;}
+      .rc-print-hdr .logo-t{font-size:28px;font-weight:900;color:#8B1A2B;font-family:Arial Black,sans-serif;}
+      .rc-print-hdr .logo-sub{font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-top:2px;}
+      .rc-print-hdr .logo-circle{width:32px;height:32px;border-radius:50%;background:white;border:2px solid #8B7355;
+        display:flex;align-items:center;justify-content:center;margin:0 4px;}
+      .rc-print-hdr .logo-inner{width:18px;height:18px;border-radius:50%;border:1.5px solid #9E8A6E;}
+      .rc-print-hdr .logo-dot-wrap{position:relative;}
+      .rc-print-hdr .logo-deg{width:12px;height:12px;border-radius:50%;background:white;
+        border:1.5px solid #E8920A;position:absolute;top:-10px;right:-4px;
+        display:flex;align-items:center;justify-content:center;}
+      .rc-print-hdr .logo-deg-inner{width:5px;height:5px;border-radius:50%;background:#7A6B58;}
+      .rc-print-meta{background:#F4F6F9;padding:10px 20px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;border-bottom:2px solid #1B2A3B;}
+      .rc-print-meta .mf{font-size:11px;}
+      .rc-print-meta .ml{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#607D8B;margin-bottom:2px;}
+      .rc-print-meta .mv{font-weight:600;color:#1C2B3A;}
+      .rc-print-name{padding:14px 20px 10px;border-bottom:1px solid #E0E0E0;}
+      .rc-print-name h2{font-family:'Playfair Display',serif;font-size:20px;color:#1B2A3B;margin:0;}
+      .rc-print-name p{font-size:12px;color:#607D8B;margin-top:4px;}
+      .ing-tbl{width:100%;border-collapse:collapse;}
+      .ing-tbl th{background:#E8F0E0;padding:8px 14px;font-size:10px;font-weight:700;
+        letter-spacing:1px;text-transform:uppercase;color:#37474F;border-bottom:2px solid #C8D8B8;text-align:left;}
+      .ing-tbl td{padding:8px 14px;border-bottom:1px solid #E8EFF0;font-size:13px;}
+      .ing-tbl tr:nth-child(even) td{background:#F8FBF8;}
+      .proc-section{padding:14px 20px;border-top:2px solid #1B2A3B;background:#F4F6F9;}
+      .proc-section h4{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:#607D8B;margin-bottom:7px;}
+      .proc-section p{font-size:13px;color:#37474F;line-height:1.65;}
+      .rc-print-footer{background:#1B2A3B;color:rgba(255,255,255,0.4);font-size:9px;
+        text-align:center;padding:7px;letter-spacing:1px;text-transform:uppercase;}
+    </style>
+    <div class="rc-print">
+      <div class="rc-print-hdr">
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span class="logo-b">b</span>
+          <div class="logo-dot-wrap">
+            <div class="logo-circle"><div class="logo-inner"></div></div>
+            <div class="logo-deg"><div class="logo-deg-inner"></div></div>
+          </div>
+          <span class="logo-t">T</span>
+          <div style="margin-left:8px;">
+            <div style="font-size:13px;font-weight:700;color:white;letter-spacing:1px;">FROM THE BOOT</div>
+            <div class="logo-sub">RESTAURANT</div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);">Recipe Card</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px;">${new Date().toLocaleDateString()}</div>
+        </div>
+      </div>
+      <div class="rc-print-name">
+        <h2>${r.name||''}</h2>
+      </div>
+      <div class="rc-print-meta">
+        <div class="mf"><div class="ml">Yield</div><div class="mv">${r.yQty||''} ${r.yUnit||''}</div></div>
+        <div class="mf"><div class="ml">Portion Size</div><div class="mv">${r.portion||''}</div></div>
+        <div class="mf"><div class="ml">Station</div><div class="mv">${r.station||''}</div></div>
+        <div class="mf"><div class="ml">Frequency</div><div class="mv">${r.freq||''}</div></div>
+      </div>
+      <table class="ing-tbl">
+        <thead><tr><th>Amount</th><th>Unit</th><th>Ingredient</th></tr></thead>
+        <tbody>${ingRows}</tbody>
+      </table>
+      ${r.procTxt&&!r.procTxt.includes('[Enter')?`<div class="proc-section"><h4>Procedure</h4><p>${r.procTxt}</p></div>`:''}
+      <div class="rc-print-footer">From the Boot Restaurant · Kitchen Recipe Card</div>
+    </div>`;
+
+  const win = window.open('','_blank','width=720,height=900');
+  win.document.write('<!DOCTYPE html><html><head><title>Recipe Card — '+r.name+'</title></head><body>'+html+'</body></html>');
+  win.document.close();
+  setTimeout(()=>win.print(), 800);
+}
+
+// ── COST CARD ────────────────────────────────────────────────────
+function openCostCard(rdEncoded){
+  const r = JSON.parse(decodeURIComponent(rdEncoded));
+  const comps = r.comps||[];
+
+  let totalCost = 0;
+  const rows = comps.map(c=>{
+    const qty = parseFloat(c[1])||0;
+    const unitCost = 0; // will be 0 until ingredients are priced
+    const ext = qty*unitCost;
+    totalCost += ext;
+    return {comp:c[0]||'',unit:c[2]||'oz',qty,unitCost,ext};
+  });
+
+  const price = parseFloat(r.price)||0;
+  const grossProfit = price>0 ? price-totalCost : 0;
+  const fcPct = price>0 && totalCost>0 ? (totalCost/price*100).toFixed(2) : '—';
+  const fcColor = fcPct!=='—' ? (fcPct<28?'#2E7D32':fcPct<35?'#E65100':'#C62828') : '#607D8B';
+
+  const ingRowsHtml = rows.map(rw=>`
+    <tr>
+      <td>${rw.unit}</td>
+      <td style="text-align:right">${rw.qty||''}</td>
+      <td>${rw.comp}</td>
+      <td style="text-align:right;font-family:'DM Mono',monospace">${rw.unitCost?'$'+rw.unitCost.toFixed(3):'<span style="color:#9E9E9E;font-size:11px">— enter cost</span>'}</td>
+      <td style="text-align:right;font-family:'DM Mono',monospace">${rw.ext?'$'+rw.ext.toFixed(2):'<span style="color:#9E9E9E;font-size:11px">—</span>'}</td>
+    </tr>`).join('');
+
+  const html = `
+    <div class="cc-header">
+      <div class="cc-item-name">${r.name||'Recipe'}</div>
+      <div class="cc-item-desc">${r.category||''} · ${r.station||''} · Portion: ${r.portion||'—'}</div>
+    </div>
+    <div style="padding:0 18px 4px;">
+      <table class="cc-table" style="margin-top:0;border-radius:0;">
+        <thead>
+          <tr>
+            <th>Unit</th><th style="text-align:right">Qty</th><th>Ingredient</th>
+            <th style="text-align:right">Unit Cost</th><th style="text-align:right">Extension</th>
+          </tr>
+        </thead>
+        <tbody>${ingRowsHtml}</tbody>
+      </table>
+      <table class="cc-totals" style="margin-top:0;">
+        <tr><td class="cc-lbl">Total Cost</td><td class="cc-val">${totalCost>0?'$'+totalCost.toFixed(2):'Enter ingredient costs →'}</td></tr>
+        <tr><td class="cc-lbl">Menu Price</td><td class="cc-val">${price>0?'$'+price.toFixed(2):'—'}</td></tr>
+        <tr><td class="cc-lbl">Gross Profit</td><td class="cc-val">${grossProfit>0?'$'+grossProfit.toFixed(2):'—'}</td></tr>
+        <tr><td class="cc-lbl">Food Cost %</td><td class="cc-val" style="color:${fcColor}">${fcPct!=='—'?fcPct+'%':'—'}</td></tr>
+      </table>
+      <p style="font-size:11px;color:var(--ink3);padding:10px 2px 14px;">
+        💡 Unit costs pull from your Food/Beverage Ingredients sheets. Add costs there to see this card fully calculated.
+      </p>
+    </div>`;
+
+  document.getElementById('cost-card-body').innerHTML = html;
+  // Store for print
+  window._currentCostCard = {html, name: r.name};
+  openM('m-cost-card');
+}
+
+function printCostCard(){
+  if(!window._currentCostCard) return;
+  const win = window.open('','_blank','width=680,height=800');
+  win.document.write(`<!DOCTYPE html><html><head><title>Cost Card — ${window._currentCostCard.name}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;600&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    body{font-family:'DM Sans',Arial,sans-serif;margin:24px;background:white;}
+    .cc-header{background:#1B2A3B;color:white;padding:14px 18px;border-radius:8px 8px 0 0;}
+    .cc-item-name{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;}
+    .cc-item-desc{font-size:12px;color:rgba(255,255,255,0.6);margin-top:3px;}
+    .cc-table{width:100%;border-collapse:collapse;font-size:13px;}
+    .cc-table th{background:#E8F0E0;padding:7px 10px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#37474F;border:1px solid #C8D8B8;text-align:left;}
+    .cc-table td{padding:7px 10px;border:1px solid #D8E8C8;}
+    .cc-table tr:nth-child(odd) td{background:#F4FAF0;}
+    .cc-table tr:nth-child(even) td{background:#EDFAE5;}
+    .cc-totals{width:100%;border-collapse:collapse;}
+    .cc-totals td{padding:7px 10px;font-size:13px;border:1px solid #C8A000;}
+    .cc-totals .cc-lbl{background:#E8C000;font-weight:700;color:#1B2A3B;width:60%;}
+    .cc-totals .cc-val{background:#F5D800;font-weight:700;color:#1B2A3B;font-family:'DM Mono',monospace;}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  </style></head><body>${window._currentCostCard.html}</body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(), 600);
+}
+
+// ── FOOD COST DASHBOARD ──────────────────────────────────────────
+async function loadFcDashboard(){
+  document.getElementById('fc-dash-loading').style.display='flex';
+  document.getElementById('fc-dash-content').style.display='none';
+
+  try{
+    const sheets = [
+      ['Prep Recipes','Prep'],['Pasta','Pasta'],['Shared Plates','Shared Plates'],
+      ['Meat & Fish','Meat & Fish'],['Pizza','Pizza'],['Salads & Soups','Salads & Soups'],
+      ['Sandwiches & Sides','Sandwiches & Sides'],['Desserts','Desserts'],
+      ['Bar Recipes','Bar'],['⭐ Specials','Specials']
+    ];
+    const allRows = await Promise.all(sheets.map(([s,cat])=>getRows(s).then(r=>({rows:r,cat})).catch(()=>({rows:[],cat}))));
+
+    const recipes = [];
+    for(const {rows,cat} of allRows){
+      const parsed = parseSheet(rows);
+      for(const r of parsed){
+        const price = parseFloat(r.price)||0;
+        const cost  = parseFloat(r.cost)||0;
+        if(price>0){
+          const fc = cost>0 ? cost/price*100 : null;
+          recipes.push({name:r.name,cat,price,cost,fc,targetFC:r.targetFC});
+        }
+      }
+    }
+
+    if(!recipes.length){
+      document.getElementById('fc-dash-loading').style.display='none';
+      document.getElementById('fc-dash-content').style.display='block';
+      document.getElementById('fc-overall').textContent='—';
+      document.getElementById('fc-overall').className='fc-gauge-val';
+      document.getElementById('fc-by-cat').innerHTML='<p style="padding:16px;font-size:13px;color:var(--ink3)">Add menu prices to recipes to see food cost analysis.</p>';
+      document.getElementById('fc-best').innerHTML='<p style="padding:16px;font-size:13px;color:var(--ink3)">No data yet.</p>';
+      document.getElementById('fc-worst').innerHTML='<p style="padding:16px;font-size:13px;color:var(--ink3)">No data yet.</p>';
+      document.getElementById('fc-all-tbody').innerHTML='<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--ink3)">No priced recipes found. Add menu prices and ingredient costs to see analysis.</td></tr>';
+      return;
+    }
+
+    const pricedWithFC = recipes.filter(r=>r.fc!==null);
+    const avgFC = pricedWithFC.length ? pricedWithFC.reduce((s,r)=>s+r.fc,0)/pricedWithFC.length : null;
+
+    const fcEl = document.getElementById('fc-overall');
+    if(avgFC!==null){
+      fcEl.textContent = avgFC.toFixed(1)+'%';
+      fcEl.className = 'fc-gauge-val '+(avgFC<28?'fc-good':avgFC<35?'fc-warn':'fc-bad');
+    } else { fcEl.textContent='—'; }
+
+    // By category
+    const byCat={};
+    for(const r of pricedWithFC){ if(!byCat[r.cat])byCat[r.cat]=[]; byCat[r.cat].push(r.fc); }
+    const catHtml = Object.entries(byCat).map(([cat,fcs])=>{
+      const avg=fcs.reduce((s,f)=>s+f,0)/fcs.length;
+      const cls=avg<28?'':'avg<35?"warn":"bad"';
+      return `<div class="fc-rank-row">
+        <div><div class="fc-rank-name">${cat}</div>
+        <div class="fc-bar-bg"><div class="fc-bar-fill ${avg>=35?'bad':avg>=28?'warn':''}" style="width:${Math.min(avg*2,100)}%"></div></div></div>
+        <div class="fc-rank-pct ${avg<28?'fc-good':avg<35?'fc-warn':'fc-bad'}">${avg.toFixed(1)}%</div>
+      </div>`;
+    }).join('');
+    document.getElementById('fc-by-cat').innerHTML = catHtml||'<p style="padding:16px;font-size:13px;color:var(--ink3)">No category data.</p>';
+
+    // Best & worst
+    const sorted = [...pricedWithFC].sort((a,b)=>a.fc-b.fc);
+    const bestHtml = sorted.slice(0,5).map(r=>`<div class="fc-rank-row">
+      <div class="fc-rank-name">${r.name}</div>
+      <div class="fc-rank-pct fc-good">${r.fc.toFixed(1)}%</div>
+    </div>`).join('');
+    const worstHtml = sorted.slice(-5).reverse().map(r=>`<div class="fc-rank-row">
+      <div class="fc-rank-name">${r.name}</div>
+      <div class="fc-rank-pct ${r.fc>=35?'fc-bad':'fc-warn'}">${r.fc.toFixed(1)}%</div>
+    </div>`).join('');
+    document.getElementById('fc-best').innerHTML = bestHtml||'<p style="padding:16px;color:var(--ink3)">No data.</p>';
+    document.getElementById('fc-worst').innerHTML = worstHtml||'<p style="padding:16px;color:var(--ink3)">No data.</p>';
+
+    // All table
+    const tbodyHtml = recipes.map(r=>{
+      const fc = r.fc!==null?r.fc.toFixed(1)+'%':'—';
+      const fcCls = r.fc!==null?(r.fc<28?'fc-good':r.fc<35?'fc-warn':'fc-bad'):'';
+      const margin = r.price&&r.cost ? '$'+(r.price-r.cost).toFixed(2) : '—';
+      const target = r.targetFC||'—';
+      const status = r.fc!==null?(r.fc<28?'✅ On target':r.fc<35?'⚠️ Watch':'❌ Over target'):'—';
+      return `<tr>
+        <td><strong>${r.name}</strong></td>
+        <td style="font-size:11px;color:var(--ink3)">${r.cat}</td>
+        <td class="price">$${r.price.toFixed(2)}</td>
+        <td class="cost">${r.cost?'$'+r.cost.toFixed(2):'—'}</td>
+        <td class="${fcCls}" style="font-family:'DM Mono',monospace;font-weight:600">${fc}</td>
+        <td class="mono">${margin}</td>
+        <td class="mono" style="color:var(--ink3)">${target}</td>
+        <td style="font-size:12px">${status}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('fc-all-tbody').innerHTML = tbodyHtml;
+
+  }catch(e){ console.error('FC Dashboard error:',e); toast('Could not load cost data','error'); }
+  document.getElementById('fc-dash-loading').style.display='none';
+  document.getElementById('fc-dash-content').style.display='block';
 }
 
 window.onload=()=>initGoogle();
