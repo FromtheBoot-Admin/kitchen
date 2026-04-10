@@ -974,7 +974,7 @@
 const CONFIG = {
   clientId:   '847014cb-5bd5-4697-b4c7-82844f5d8d02',
   tenantId:   '3ef82175-3d91-47f8-b55d-2ad5bfbe556f',
-  filePath:   '/From the Boot/From the Boot Menu and Pricing Excel Database.xlsx',
+  fileName:   'From the Boot Menu and Pricing Excel Database.xlsx',
   scopes:     ['Files.ReadWrite', 'User.Read'],
 };
 
@@ -1052,10 +1052,20 @@ async function graphRequest(endpoint, method = 'GET', body = null) {
   return res.json();
 }
 
+let cachedFileId = null;
 async function getFileId() {
-  const encoded = encodeURIComponent(CONFIG.filePath);
-  const data = await graphRequest(`/me/drive/root:${encoded}`);
-  return data.id;
+  if (cachedFileId) return cachedFileId;
+  const encoded = encodeURIComponent(CONFIG.fileName);
+  const data = await graphRequest(`/me/drive/root/search(q='${encoded}')?$top=10`);
+  if (!data || !data.value || data.value.length === 0) {
+    showToast("Excel file not found on OneDrive", "error");
+    throw new Error("File not found");
+  }
+  const match = data.value.find(f => f.name === CONFIG.fileName);
+  if (!match) { showToast("File name mismatch — check exact filename", "error"); throw new Error("No exact match"); }
+  cachedFileId = match.id;
+  console.log("Found file:", match.name, "path:", match.parentReference?.path);
+  return cachedFileId;
 }
 
 async function getSheetRows(sheetName) {
