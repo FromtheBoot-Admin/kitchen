@@ -975,7 +975,7 @@ const CONFIG = {
   clientId:   '847014cb-5bd5-4697-b4c7-82844f5d8d02',
   tenantId:   '3ef82175-3d91-47f8-b55d-2ad5bfbe556f',
   fileName:   'From the Boot Menu and Pricing Excel Database.xlsx',
-  scopes:     ['Files.ReadWrite', 'User.Read'],
+  scopes:     ['Files.ReadWrite', 'User.Read', 'Sites.Read.All'],
 };
 
 const msalConfig = {
@@ -1053,15 +1053,69 @@ async function graphRequest(endpoint, method = 'GET', body = null) {
 }
 
 let cachedFileId = null;
+let driveEndpoint = null;
+
+async function getDriveEndpoint() {
+  if (driveEndpoint) return driveEndpoint;
+  // Try personal OneDrive first, then SharePoint/Business
+  try {
+    const data = await graphRequest("/me/drive");
+    if (data && data.id) {
+      driveEndpoint = "/me/drive";
+      console.log("Using personal OneDrive:", data.driveType);
+      return driveEndpoint;
+    }
+  } catch(e) {
+    console.log("Personal drive failed, trying SharePoint...");
+  }
+  // Try SharePoint drives
+  try {
+    const sites = await graphRequest("/sites?search=fromtheboot&$select=id,name,displayName");
+    console.log("Sites found:", sites.value?.map(s => s.displayName));
+    if (sites.value && sites.value.length > 0) {
+      const siteId = sites.value[0].id;
+      driveEndpoint = `/sites/${siteId}/drive`;
+      return driveEndpoint;
+    }
+  } catch(e) {
+    console.log("Sites search failed:", e.message);
+  }
+  driveEndpoint = "/me/drive";
+  return driveEndpoint;
+}
+
 async function getFileId() {
   if (cachedFileId) return cachedFileId;
-  const path = "/FROM THE BOOT/" + CONFIG.fileName;
+  const drive = await getDriveEndpoint();
   const encoded = "/FROM%20THE%20BOOT/" + encodeURIComponent(CONFIG.fileName);
-  const data = await graphRequest("/me/drive/root:" + encoded + ":");
-  if (!data || !data.id) throw new Error("File not found");
-  cachedFileId = data.id;
-  console.log("Found file:", data.name);
-  return cachedFileId;
+  
+  // Try the folder path first
+  try {
+    const data = await graphRequest(drive + "/root:" + encoded + ":");
+    if (data && data.id) {
+      cachedFileId = data.id;
+      console.log("Found file at FROM THE BOOT folder");
+      return cachedFileId;
+    }
+  } catch(e) { console.log("FROM THE BOOT path failed:", e.message); }
+
+  // Try root level
+  try {
+    const data = await graphRequest(drive + "/root:/" + encodeURIComponent(CONFIG.fileName) + ":");
+    if (data && data.id) {
+      cachedFileId = data.id;
+      console.log("Found file at root");
+      return cachedFileId;
+    }
+  } catch(e) { console.log("Root path failed:", e.message); }
+
+  // List root to debug
+  try {
+    const root = await graphRequest(drive + "/root/children?$top=50&$select=name,folder");
+    console.log("Drive root contains:", root.value?.map(f => f.name + (f.folder ? "/" : "")));
+  } catch(e) { console.log("Could not list drive root"); }
+
+  throw new Error("Could not locate Excel file on OneDrive");
 }
 
 async function getSheetRows(sheetName) {
