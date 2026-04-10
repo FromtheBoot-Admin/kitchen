@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>From the Boot — Kitchen Database</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root {
     --red:        #8B0000;
@@ -482,8 +482,8 @@
     <div class="auth-logo">from the <span>boot</span></div>
     <div class="auth-sub">Kitchen Database</div>
     <div class="auth-desc">Sign in with your fromtheboot.com Microsoft account to access the recipe and ingredient database.</div>
-    <button class="btn-signin" onclick="signIn()">Sign in with Microsoft</button>
-    <div class="auth-note">Uses your existing fromtheboot.com account — no new password needed</div>
+    <button class="btn-signin" onclick="signIn()" id="signin-btn">Sign in with Google</button>
+    <div class="auth-note">Sign in with your From the Boot Google account</div>
   </div>
 </div>
 
@@ -522,8 +522,8 @@
     </button>
 
     <div class="sidebar-footer">
-      <div><span class="conn-dot"></span> Connected to OneDrive</div>
-      <div style="margin-top:6px; font-size:10px;">From the Boot Menu and Pricing Excel Database.xlsx</div>
+      <div><span class="conn-dot"></span> Connected to Google Sheets</div>
+      <div style="margin-top:6px; font-size:10px;">From the Boot Menu and Pricing Database</div>
       <div style="margin-top:10px;">
         <button onclick="signOut()" style="background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:11px;padding:0;">Sign out</button>
       </div>
@@ -972,116 +972,72 @@
 <script>
 // ── CONFIG ─────────────────────────────────────────────────────
 const CONFIG = {
-  clientId:   '847014cb-5bd5-4697-b4c7-82844f5d8d02',
-  tenantId:   '3ef82175-3d91-47f8-b55d-2ad5bfbe556f',
-  fileName:   'From the Boot Menu and Pricing Excel Database.xlsx',
-  scopes:     ['Files.ReadWrite', 'User.Read', 'offline_access'],
+  clientId:   '27584129596-1a17u8ervjkrv9c9agtb5gln3hp8bbrt.apps.googleusercontent.com',
+  spreadsheetId: '1THMGX0rcVxGBB39eRDu9lO306vd-F1n7',
+  apiKey:     '', // not needed with OAuth
+  scopes:     'https://www.googleapis.com/auth/spreadsheets',
 };
 
-const msalConfig = {
-  auth: {
-    clientId:   CONFIG.clientId,
-    authority:  'https://login.microsoftonline.com/common',
-    redirectUri: "https://FromtheBoot-Admin.github.io/kitchen/",
-  },
-  cache: { cacheLocation: 'sessionStorage' }
-};
-
-let msalInstance, currentAccount, accessToken;
+let tokenClient, accessToken;
 let lang = 'en';
 let currentIngCategory = 'all';
 let currentSpecialFilter = 'all';
 
-// ── MSAL INIT ──────────────────────────────────────────────────
-async function initMsal() {
-  msalInstance = new msal.PublicClientApplication(msalConfig);
-  await msalInstance.initialize();
-
-  const response = await msalInstance.handleRedirectPromise();
-  if (response) {
-    currentAccount = response.account;
-    msalInstance.setActiveAccount(currentAccount);
-    await afterSignIn();
-    return;
-  }
-
-  const accounts = msalInstance.getAllAccounts();
-  if (accounts.length > 0) {
-    currentAccount = accounts[0];
-    msalInstance.setActiveAccount(currentAccount);
-    await afterSignIn();
-  }
+// ── GOOGLE AUTH ────────────────────────────────────────────────
+function initGoogle() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CONFIG.clientId,
+    scope: CONFIG.scopes,
+    callback: (response) => {
+      if (response.error) { console.error(response); return; }
+      accessToken = response.access_token;
+      afterSignIn();
+    },
+  });
 }
 
-async function signIn() {
-  await msalInstance.loginRedirect({ scopes: CONFIG.scopes });
+function signIn() {
+  tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
 function signOut() {
-  msalInstance.logoutRedirect();
-}
-
-async function getToken() {
-  try {
-    const res = await msalInstance.acquireTokenSilent({ scopes: CONFIG.scopes, account: currentAccount });
-    return res.accessToken;
-  } catch {
-    const res = await msalInstance.acquireTokenRedirect({ scopes: CONFIG.scopes });
-    return res?.accessToken;
-  }
+  google.accounts.oauth2.revoke(accessToken, () => {
+    accessToken = null;
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('auth-screen').classList.remove('hidden');
+  });
 }
 
 async function afterSignIn() {
   document.getElementById('auth-screen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
-  accessToken = await getToken();
   loadDashboard();
 }
 
-// ── GRAPH API ──────────────────────────────────────────────────
-async function graphRequest(endpoint, method = 'GET', body = null) {
-  if (!accessToken) accessToken = await getToken();
+// ── SHEETS API ─────────────────────────────────────────────────
+async function sheetsRequest(endpoint, method = 'GET', body = null) {
   const opts = {
     method,
-    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    }
   };
   if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(`https://graph.microsoft.com/v1.0${endpoint}`, opts);
-  if (!res.ok) throw new Error(`Graph API error: ${res.status}`);
+  const base = 'https://sheets.googleapis.com/v4/spreadsheets/' + CONFIG.spreadsheetId;
+  const res = await fetch(base + endpoint, opts);
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(`Sheets API error: ${res.status} — ${err.error?.message}`);
+  }
   if (res.status === 204) return null;
   return res.json();
-}
-
-let cachedFileId = '3A5FC095-E0D4-4A26-A86E-933C381FB408';
-let driveId      = '24fcc45b57b8bc31';
-
-async function graphRequest(endpoint, method = 'GET', body = null) {
-  if (!accessToken) accessToken = await getToken();
-  const opts = {
-    method,
-    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
-  };
-  if (body) opts.body = JSON.stringify(body);
-  // Use personal OneDrive endpoint
-  const base = endpoint.startsWith('/me/drive/items/')
-    ? 'https://graph.microsoft.com/v1.0'
-    : 'https://graph.microsoft.com/v1.0';
-  const res = await fetch(`${base}${endpoint}`, opts);
-  if (!res.ok) throw new Error(`Graph API error: ${res.status}`);
-  if (res.status === 204) return null;
-  return res.json();
-}
-
-async function getFileId() {
-  return cachedFileId;
 }
 
 async function getSheetRows(sheetName) {
   try {
-    const fileId = await getFileId();
     const enc = encodeURIComponent(sheetName);
-    // Use drives endpoint for personal OneDrive
-    const data = await graphRequest(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/usedRange`);
+    const data = await sheetsRequest(`/values/${enc}`);
     return data.values || [];
   } catch(e) {
     console.warn(`Could not load sheet "${sheetName}":`, e.message);
@@ -1092,23 +1048,17 @@ async function getSheetRows(sheetName) {
 async function appendRow(sheetName, values) {
   setSyncing(true);
   try {
-    const fileId = await getFileId();
     const enc = encodeURIComponent(sheetName);
-    const rows = await getSheetRows(sheetName);
-    const nextRow = rows.length + 1;
-    const colCount = values.length;
-    const colLetter = String.fromCharCode(64 + colCount);
-    const range = `A${nextRow}:${colLetter}${nextRow}`;
-    await graphRequest(
-      `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/range(address='${range}')`,
-      'PATCH',
+    await sheetsRequest(
+      `/values/${enc}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+      'POST',
       { values: [values] }
     );
     setSyncing(false);
-    showToast('Saved to OneDrive ✓', 'success');
+    showToast('Saved to Google Sheets ✓', 'success');
   } catch(e) {
     setSyncing(false);
-    showToast('Sync error — check connection', 'error');
+    showToast('Sync error — ' + e.message, 'error');
     console.error(e);
   }
 }
@@ -1116,13 +1066,11 @@ async function appendRow(sheetName, values) {
 async function updateCell(sheetName, row, col, value) {
   setSyncing(true);
   try {
-    const fileId = await getFileId();
-    const enc = encodeURIComponent(sheetName);
     const colLetter = String.fromCharCode(64 + col);
-    const range = `${colLetter}${row}`;
-    await graphRequest(
-      `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/range(address='${range}')`,
-      'PATCH',
+    const range = encodeURIComponent(`${sheetName}!${colLetter}${row}`);
+    await sheetsRequest(
+      `/values/${range}?valueInputOption=USER_ENTERED`,
+      'PUT',
       { values: [[value]] }
     );
     setSyncing(false);
@@ -1152,23 +1100,8 @@ function setLang(l) {
   lang = l;
   document.getElementById('btn-en').classList.toggle('active', l === 'en');
   document.getElementById('btn-es').classList.toggle('active', l === 'es');
-
   document.querySelectorAll('[data-en]').forEach(el => {
     el.textContent = el.getAttribute(`data-${l}`) || el.getAttribute('data-en');
-  });
-  document.querySelectorAll('.col-label[data-en]').forEach(el => {
-    el.textContent = el.getAttribute(`data-${l}`) || el.getAttribute('data-en');
-  });
-  document.querySelectorAll('.recipe-card').forEach(card => {
-    const nameEl = card.querySelector('.recipe-name');
-    if (nameEl) {
-      nameEl.textContent = nameEl.getAttribute(`data-${l}`) || nameEl.getAttribute('data-en');
-    }
-  });
-  document.querySelectorAll('.procedure-box').forEach(box => {
-    if (l === 'es') {
-      box.querySelector('[data-proc-en]') && (box.style.display = box.classList.contains('es') ? '' : 'none');
-    }
   });
   document.querySelectorAll('.proc-en').forEach(el => el.style.display = l === 'en' ? '' : 'none');
   document.querySelectorAll('.proc-es').forEach(el => el.style.display = l === 'es' ? '' : 'none');
@@ -1212,7 +1145,7 @@ async function loadDashboard() {
 }
 
 function countRecipeHeaders(rows) {
-  return rows.slice(5).filter(r => r[0] && String(r[0]).match(/^[A-Z]{1,2}\d+-\d+$|^(L[12]-|MD-|SP-)\d+/)).length;
+  return rows.slice(5).filter(r => r && r[0] && String(r[0]).match(/^(L[12]-|MD-|SP-)\d+/)).length;
 }
 
 // ── INGREDIENTS ────────────────────────────────────────────────
@@ -1223,7 +1156,7 @@ async function loadIngredients() {
   document.getElementById('ingredients-table').style.display = 'none';
   try {
     const rows = await getSheetRows('Ingredients');
-    allIngredients = rows.slice(4).filter(r => r[1]);
+    allIngredients = rows.slice(4).filter(r => r && r[1]);
     renderIngredients(allIngredients);
   } catch(e) {
     showToast('Could not load ingredients', 'error');
@@ -1241,7 +1174,7 @@ function renderIngredients(ings) {
   tbody.innerHTML = ings.map((r, i) => `
     <tr>
       <td style="color:var(--ink-soft);font-size:12px;">${r[0] || i+1}</td>
-      <td><strong>${lang === 'en' ? r[1] : (r[2] || r[1])}</strong></td>
+      <td><strong>${lang === 'en' ? (r[1]||'') : (r[2]||r[1]||'')}</strong></td>
       <td><span style="font-size:12px;color:var(--ink-soft);">${r[3] || ''}</span></td>
       <td><span style="font-family:'DM Mono',monospace;font-size:12px;">${r[4] || ''}</span></td>
       <td class="cost-cell">${r[5] ? '$' + Number(r[5]).toFixed(3) : '<span style="color:var(--ink-soft);font-size:12px;">—</span>'}</td>
@@ -1249,7 +1182,7 @@ function renderIngredients(ings) {
       <td style="font-size:12px;color:var(--ink-soft);">${r[8] || ''}</td>
       <td><span class="badge ${r[9]==='Yes'?'badge-active':'badge-inactive'}">${r[9] || 'Yes'}</span></td>
       <td><div class="action-btns">
-        <button class="icon-btn" title="Edit" onclick="editIngredient(${i})">✏️</button>
+        <button class="icon-btn" title="Edit">✏️</button>
       </div></td>
     </tr>`).join('');
 }
@@ -1266,7 +1199,6 @@ function filterIngredients(q) {
 function filterIngCategory(cat, el) {
   document.querySelectorAll('#ing-category-filters .filter-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  currentIngCategory = cat;
   const filtered = cat === 'all' ? allIngredients : allIngredients.filter(r => r[3] === cat);
   renderIngredients(filtered);
 }
@@ -1304,7 +1236,7 @@ function renderRecipeCard(id, nameEn, nameEs, station, yieldQty, yieldUnit,
     const fc = (portionCost / menuPrice * 100).toFixed(1);
     const fcClass = fc < 28 ? 'fc-good' : fc < 35 ? 'fc-warn' : 'fc-bad';
     fcHtml = `
-      <div style="display:flex;gap:16px;margin-top:14px;padding:12px 14px;background:var(--cream);border-radius:8px;">
+      <div style="display:flex;gap:16px;margin-top:14px;padding:12px 14px;background:var(--cream);border-radius:8px;flex-wrap:wrap;">
         <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-soft);">Menu Price</div><div class="price-cell" style="font-size:16px;">$${Number(menuPrice).toFixed(2)}</div></div>
         <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-soft);">Portion Cost</div><div class="cost-cell" style="font-size:16px;">$${Number(portionCost).toFixed(2)}</div></div>
         <div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-soft);">Food Cost %</div><div class="fc-cell ${fcClass}" style="font-size:16px;">${fc}%</div></div>
@@ -1343,7 +1275,7 @@ function renderRecipeCard(id, nameEn, nameEs, station, yieldQty, yieldUnit,
         ${specialExtra}
         ${fcHtml}
         ${ingRows ? `
-        <table class="ing-table" style="margin-top:${fcHtml || specialExtra ? '14px':'0'};">
+        <table class="ing-table" style="margin-top:${fcHtml||specialExtra?'14px':'0'};">
           <thead><tr>
             <th>${lang==='en'?'Ingredient':'Ingrediente'}</th>
             <th>Amount</th><th>Unit</th><th>Source</th>
@@ -1369,7 +1301,7 @@ function toggleRecipe(header) {
   if (arrow) arrow.textContent = body.classList.contains('open') ? '▴' : '▾';
 }
 
-// ── BATCH L1 ───────────────────────────────────────────────────
+// ── BATCH RECIPES ──────────────────────────────────────────────
 async function loadBatchL1() {
   document.getElementById('batch-l1-loading').style.display = 'flex';
   document.getElementById('batch-l1-list').innerHTML = '';
@@ -1426,15 +1358,12 @@ function parseAndRenderRecipes(rows, isMenu) {
   for (const row of dataRows) {
     if (!row || row.every(c => !c)) continue;
     const id = String(row[0] || '');
-
-    if (id.match(/^(L[12]-|MD-)\d+/) || (row[1] && !row[0] && row[3] && row[4])) {
+    if (id.match(/^(L[12]-|MD-)\d+/)) {
       flush();
       currentRecipe = row;
-    } else if (row[0] === '' && row[1] && String(row[1]).startsWith('Procedure')) {
-      // skip label col
-    } else if (row[0] === '' && row[1] && String(row[1]).toLowerCase().includes('procedure')) {
+    } else if (row[0] === '' && row[1] && String(row[1]).toLowerCase().includes('procedure (en)')) {
       procEn = row[2] || '';
-    } else if (row[0] === '' && row[1] && String(row[1]).toLowerCase().includes('procedimiento')) {
+    } else if (row[0] === '' && row[1] && String(row[1]).toLowerCase().includes('procedure (es)')) {
       procEs = row[2] || '';
     } else if (currentRecipe && row[1]) {
       currentIngredients.push({ en: row[1], es: row[2], source: row[3], amount: row[4], unit: row[5] });
@@ -1459,7 +1388,7 @@ async function loadSpecials() {
   document.getElementById('specials-list').innerHTML = '';
   try {
     const rows = await getSheetRows('Specials');
-    allSpecialsRows = rows.slice(5).filter(r => r[1]);
+    allSpecialsRows = rows.slice(5).filter(r => r && r[1]);
     renderSpecials(allSpecialsRows);
   } catch(e) { showToast('Could not load specials', 'error'); }
   document.getElementById('specials-loading').style.display = 'none';
@@ -1467,23 +1396,18 @@ async function loadSpecials() {
 
 function renderSpecials(rows) {
   if (rows.length === 0) {
-    document.getElementById('specials-list').innerHTML = `<div class="empty-state"><div class="empty-icon">⭐</div><h3>No specials yet</h3><p>Add your first special using the button above.<br>Specials can be active, seasonal, or archived and brought back any time.</p></div>`;
+    document.getElementById('specials-list').innerHTML = `<div class="empty-state"><div class="empty-icon">⭐</div><h3>No specials yet</h3><p>Add your first special using the button above.</p></div>`;
     return;
   }
   document.getElementById('specials-list').innerHTML = rows.map(r =>
-    renderRecipeCard(
-      r[0], r[1], r[2], r[3], r[4], r[5], r[6], '',
-      [], r[/* proc col */0], '',
-      true, r[12], r[13], r[14],
-      r[6], r[7], r[9]
-    )
+    renderRecipeCard(r[0], r[1], r[2], r[3], r[4], r[5], r[6], '',
+      [], '', '', true, r[12], r[13], r[14], r[6], r[7], r[9])
   ).join('');
 }
 
 function filterSpecials(status, el) {
   document.querySelectorAll('.filter-tab.purple').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  currentSpecialFilter = status;
   const filtered = status === 'all' ? allSpecialsRows : allSpecialsRows.filter(r => r[12] === status);
   renderSpecials(filtered);
 }
@@ -1498,15 +1422,12 @@ async function saveSpecial() {
   const start    = document.getElementById('sp-start').value;
   const end      = document.getElementById('sp-end').value;
   const notes    = document.getElementById('sp-notes').value.trim();
-  const procEn   = document.getElementById('sp-proc-en').value.trim();
-  const procEs   = document.getElementById('sp-proc-es').value.trim();
 
   if (!nameEn) { showToast('Please enter a dish name', 'error'); return; }
 
   const spNum = (allSpecialsRows.length + 1).toString().padStart(3, '0');
-  const spId  = `SP-${spNum}`;
   const dates = start && end ? `${start} – ${end}` : (start || '');
-  const values = [spId, nameEn, nameEs, station, 1, 'portion',
+  const values = [`SP-${spNum}`, nameEn, nameEs, station, 1, 'portion',
                   price ? Number(price) : '', '', '', targetFC, '', '',
                   status, dates, notes];
 
@@ -1527,10 +1448,8 @@ async function saveDish() {
 
   const values = ['MD-NEW', nameEn, nameEs, station, 1, 'portion',
                   price ? Number(price) : '', '', '', targetFC, '', '', notes];
-
   closeModal('modal-add-dish');
   await appendRow('Menu Dishes', values);
-  showToast('Dish added — add ingredients next', 'success');
   loadMenu();
 }
 
@@ -1553,25 +1472,14 @@ async function saveBatch() {
 
   closeModal('modal-add-batch');
   await appendRow(sheet, values);
-  showToast('Batch recipe added', 'success');
   if (level === 'L1') loadBatchL1(); else loadBatchL2();
 }
 
-function editIngredient(idx) {
-  showToast('Edit mode coming in next update', 'success');
-}
-
 // ── MODALS ─────────────────────────────────────────────────────
-function openModal(id) {
-  document.getElementById(id).classList.add('open');
-}
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', e => {
-    if (e.target === overlay) overlay.classList.remove('open');
-  });
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
 });
 
 // ── TOAST ──────────────────────────────────────────────────────
@@ -1588,17 +1496,12 @@ function showToast(msg, type = 'success') {
 function setSyncing(syncing) {
   const el = document.getElementById('sync-status');
   if (!el) return;
-  if (syncing) {
-    el.className = 'sync-badge syncing';
-    el.innerHTML = '<div class="sync-dot"></div> Syncing...';
-  } else {
-    el.className = 'sync-badge';
-    el.innerHTML = '<div class="sync-dot"></div> Synced';
-  }
+  el.className = syncing ? 'sync-badge syncing' : 'sync-badge';
+  el.innerHTML = `<div class="sync-dot"></div> ${syncing ? 'Syncing...' : 'Synced'}`;
 }
 
 // ── BOOT ───────────────────────────────────────────────────────
-initMsal().catch(console.error);
+window.onload = () => { initGoogle(); };
 </script>
 </body>
 </html>
