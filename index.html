@@ -975,13 +975,13 @@ const CONFIG = {
   clientId:   '847014cb-5bd5-4697-b4c7-82844f5d8d02',
   tenantId:   '3ef82175-3d91-47f8-b55d-2ad5bfbe556f',
   fileName:   'From the Boot Menu and Pricing Excel Database.xlsx',
-  scopes:     ['Files.ReadWrite', 'User.Read', 'Sites.Read.All'],
+  scopes:     ['Files.ReadWrite', 'User.Read', 'offline_access'],
 };
 
 const msalConfig = {
   auth: {
     clientId:   CONFIG.clientId,
-    authority:  `https://login.microsoftonline.com/${CONFIG.tenantId}`,
+    authority:  'https://login.microsoftonline.com/common',
     redirectUri: "https://FromtheBoot-Admin.github.io/kitchen/",
   },
   cache: { cacheLocation: 'sessionStorage' }
@@ -1052,80 +1052,39 @@ async function graphRequest(endpoint, method = 'GET', body = null) {
   return res.json();
 }
 
-let cachedFileId = null;
-let driveEndpoint = null;
+let cachedFileId = '3A5FC095-E0D4-4A26-A86E-933C381FB408';
+let driveId      = '24fcc45b57b8bc31';
 
-async function getDriveEndpoint() {
-  if (driveEndpoint) return driveEndpoint;
-  // Try personal OneDrive first, then SharePoint/Business
-  try {
-    const data = await graphRequest("/me/drive");
-    if (data && data.id) {
-      driveEndpoint = "/me/drive";
-      console.log("Using personal OneDrive:", data.driveType);
-      return driveEndpoint;
-    }
-  } catch(e) {
-    console.log("Personal drive failed, trying SharePoint...");
-  }
-  // Try SharePoint drives
-  try {
-    const sites = await graphRequest("/sites?search=fromtheboot&$select=id,name,displayName");
-    console.log("Sites found:", sites.value?.map(s => s.displayName));
-    if (sites.value && sites.value.length > 0) {
-      const siteId = sites.value[0].id;
-      driveEndpoint = `/sites/${siteId}/drive`;
-      return driveEndpoint;
-    }
-  } catch(e) {
-    console.log("Sites search failed:", e.message);
-  }
-  driveEndpoint = "/me/drive";
-  return driveEndpoint;
+async function graphRequest(endpoint, method = 'GET', body = null) {
+  if (!accessToken) accessToken = await getToken();
+  const opts = {
+    method,
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  // Use personal OneDrive endpoint
+  const base = endpoint.startsWith('/me/drive/items/')
+    ? 'https://graph.microsoft.com/v1.0'
+    : 'https://graph.microsoft.com/v1.0';
+  const res = await fetch(`${base}${endpoint}`, opts);
+  if (!res.ok) throw new Error(`Graph API error: ${res.status}`);
+  if (res.status === 204) return null;
+  return res.json();
 }
 
 async function getFileId() {
-  if (cachedFileId) return cachedFileId;
-  const drive = await getDriveEndpoint();
-  const encoded = "/FROM%20THE%20BOOT/" + encodeURIComponent(CONFIG.fileName);
-  
-  // Try the folder path first
-  try {
-    const data = await graphRequest(drive + "/root:" + encoded + ":");
-    if (data && data.id) {
-      cachedFileId = data.id;
-      console.log("Found file at FROM THE BOOT folder");
-      return cachedFileId;
-    }
-  } catch(e) { console.log("FROM THE BOOT path failed:", e.message); }
-
-  // Try root level
-  try {
-    const data = await graphRequest(drive + "/root:/" + encodeURIComponent(CONFIG.fileName) + ":");
-    if (data && data.id) {
-      cachedFileId = data.id;
-      console.log("Found file at root");
-      return cachedFileId;
-    }
-  } catch(e) { console.log("Root path failed:", e.message); }
-
-  // List root to debug
-  try {
-    const root = await graphRequest(drive + "/root/children?$top=50&$select=name,folder");
-    console.log("Drive root contains:", root.value?.map(f => f.name + (f.folder ? "/" : "")));
-  } catch(e) { console.log("Could not list drive root"); }
-
-  throw new Error("Could not locate Excel file on OneDrive");
+  return cachedFileId;
 }
 
 async function getSheetRows(sheetName) {
   try {
     const fileId = await getFileId();
     const enc = encodeURIComponent(sheetName);
-    const data = await graphRequest(`/me/drive/items/${fileId}/workbook/worksheets/${enc}/usedRange`);
+    // Use drives endpoint for personal OneDrive
+    const data = await graphRequest(`/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/usedRange`);
     return data.values || [];
   } catch(e) {
-    console.warn(`Could not load sheet "${sheetName}":`, e);
+    console.warn(`Could not load sheet "${sheetName}":`, e.message);
     return [];
   }
 }
@@ -1141,7 +1100,7 @@ async function appendRow(sheetName, values) {
     const colLetter = String.fromCharCode(64 + colCount);
     const range = `A${nextRow}:${colLetter}${nextRow}`;
     await graphRequest(
-      `/me/drive/items/${fileId}/workbook/worksheets/${enc}/range(address='${range}')`,
+      `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/range(address='${range}')`,
       'PATCH',
       { values: [values] }
     );
@@ -1162,7 +1121,7 @@ async function updateCell(sheetName, row, col, value) {
     const colLetter = String.fromCharCode(64 + col);
     const range = `${colLetter}${row}`;
     await graphRequest(
-      `/me/drive/items/${fileId}/workbook/worksheets/${enc}/range(address='${range}')`,
+      `/drives/${driveId}/items/${fileId}/workbook/worksheets/${enc}/range(address='${range}')`,
       'PATCH',
       { values: [[value]] }
     );
