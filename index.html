@@ -1055,25 +1055,38 @@ async function graphRequest(endpoint, method = 'GET', body = null) {
 let cachedFileId = null;
 async function getFileId() {
   if (cachedFileId) return cachedFileId;
-  // Search using a short keyword — Graph API search doesn't support long filenames well
-  const data = await graphRequest("/me/drive/root/search(q='Boot%20Menu')?$top=20&$select=id,name,parentReference");
-  if (!data || !data.value || data.value.length === 0) {
-    // Fallback: try listing root children
-    const root = await graphRequest("/me/drive/root/children?$select=id,name");
-    showToast("Searching OneDrive root...", "success");
-    console.log("Root files:", root.value?.map(f => f.name));
-    throw new Error("File not found via search");
+
+  // Try multiple known path variations
+  const pathsToTry = [
+    "/FROM THE BOOT/" + CONFIG.fileName,
+    "/From the Boot/" + CONFIG.fileName,
+    "/From The Boot/" + CONFIG.fileName,
+    "/" + CONFIG.fileName,
+    "/Desktop/" + CONFIG.fileName,
+    "/Documents/" + CONFIG.fileName,
+  ];
+
+  for (const path of pathsToTry) {
+    try {
+      const encoded = path.split('/').map(p => encodeURIComponent(p)).join('/');
+      const data = await graphRequest("/me/drive/root:" + encoded + ":");
+      if (data && data.id) {
+        cachedFileId = data.id;
+        console.log("Found file at path:", path);
+        return cachedFileId;
+      }
+    } catch(e) {
+      console.log("Not found at:", path);
+    }
   }
-  console.log("Search results:", data.value.map(f => f.name));
-  const match = data.value.find(f => f.name === CONFIG.fileName);
-  if (!match) {
-    console.error("Files found but none matched. Found:", data.value.map(f=>f.name));
-    showToast("File found but name mismatch — check console", "error");
-    throw new Error("No exact match");
-  }
-  cachedFileId = match.id;
-  console.log("Found file:", match.name);
-  return cachedFileId;
+
+  // Last resort: list all items in root and log them
+  try {
+    const root = await graphRequest("/me/drive/root/children?$top=50&$select=name,id,folder");
+    console.log("OneDrive root contents:", root.value?.map(f => f.name + (f.folder ? '/' : '')));
+    showToast("File not found — check console for OneDrive contents", "error");
+  } catch(e) {}
+  throw new Error("Could not locate Excel file");
 }
 
 async function getSheetRows(sheetName) {
