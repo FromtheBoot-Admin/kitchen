@@ -1055,38 +1055,13 @@ async function graphRequest(endpoint, method = 'GET', body = null) {
 let cachedFileId = null;
 async function getFileId() {
   if (cachedFileId) return cachedFileId;
-
-  // Try multiple known path variations
-  const pathsToTry = [
-    "/FROM THE BOOT/" + CONFIG.fileName,
-    "/From the Boot/" + CONFIG.fileName,
-    "/From The Boot/" + CONFIG.fileName,
-    "/" + CONFIG.fileName,
-    "/Desktop/" + CONFIG.fileName,
-    "/Documents/" + CONFIG.fileName,
-  ];
-
-  for (const path of pathsToTry) {
-    try {
-      const encoded = path.split('/').map(p => encodeURIComponent(p)).join('/');
-      const data = await graphRequest("/me/drive/root:" + encoded + ":");
-      if (data && data.id) {
-        cachedFileId = data.id;
-        console.log("Found file at path:", path);
-        return cachedFileId;
-      }
-    } catch(e) {
-      console.log("Not found at:", path);
-    }
-  }
-
-  // Last resort: list all items in root and log them
-  try {
-    const root = await graphRequest("/me/drive/root/children?$top=50&$select=name,id,folder");
-    console.log("OneDrive root contents:", root.value?.map(f => f.name + (f.folder ? '/' : '')));
-    showToast("File not found — check console for OneDrive contents", "error");
-  } catch(e) {}
-  throw new Error("Could not locate Excel file");
+  const path = "/FROM THE BOOT/" + CONFIG.fileName;
+  const encoded = "/FROM%20THE%20BOOT/" + encodeURIComponent(CONFIG.fileName);
+  const data = await graphRequest("/me/drive/root:" + encoded + ":");
+  if (!data || !data.id) throw new Error("File not found");
+  cachedFileId = data.id;
+  console.log("Found file:", data.name);
+  return cachedFileId;
 }
 
 async function getSheetRows(sheetName) {
