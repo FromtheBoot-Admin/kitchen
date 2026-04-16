@@ -509,7 +509,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
         <div class="card">
           <div id="food-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
           <table class="tbl" id="food-tbl" style="display:none">
-            <thead><tr><th>#</th><th>Ingredient</th><th>Category</th><th>Unit</th><th>Unit Cost</th><th>Supplier</th><th>Active</th><th></th></tr></thead>
+            <thead><tr><th>#</th><th>Ingredient</th><th>Category</th><th>Purchase Unit</th><th>Case Size</th><th>Case Wt (oz)</th><th>Case Cost ($)</th><th style="background:rgba(46,125,50,0.08);color:var(--green)">Cost / Oz ($)</th><th>Supplier</th><th>Active</th><th></th></tr></thead>
             <tbody id="food-tbody"></tbody>
           </table>
         </div>
@@ -584,57 +584,182 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
     </div>
 
     <!-- MENU PAGES -->
-    <div id="pg-shared" class="page hidden">
-      <div class="topbar"><div class="pg-title">Shared Plates</div><div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div></div>
-      <div class="content"><div id="shared-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div><div id="shared-list"></div></div>
-    </div>
 
-    <div id="pg-pasta" class="page hidden">
-      <div class="topbar"><div class="pg-title">Pasta</div><div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Pasta</button></div></div>
+    <div id="pg-l-shared" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Shared Plates<span class="badge b-l" style="font-size:12px;padding:3px 10px;margin-left:8px;">(L)</span></div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
       <div class="content">
-        <div class="ftabs" id="pasta-menu-tabs">
-          <div class="ft on" onclick="filterMenuTab('pasta','all',this)">All</div>
-          <div class="ft" onclick="filterMenuTab('pasta','L',this)">Lunch</div>
-          <div class="ft" onclick="filterMenuTab('pasta','D',this)">Dinner</div>
-        </div>
-        <div id="pasta-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
-        <div id="pasta-list"></div>
+        
+        <div id="l-shared-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="l-shared-list"></div>
       </div>
     </div>
-
-    <div id="pg-meat" class="page hidden">
-      <div class="topbar"><div class="pg-title">Meat &amp; Fish</div><div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div></div>
+    <div id="pg-l-pasta" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Pasta<span class="badge b-l" style="font-size:12px;padding:3px 10px;margin-left:8px;">(L)</span></div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
       <div class="content">
-        <div class="ftabs" id="meat-cats">
-          <div class="ft on" onclick="filterMenuCat('meat','all',this)">All</div>
-          <div class="ft" onclick="filterMenuCat('meat','Veal',this)">Veal</div>
-          <div class="ft" onclick="filterMenuCat('meat','Seafood',this)">Seafood</div>
-          <div class="ft" onclick="filterMenuCat('meat','Chicken',this)">Chicken</div>
-          <div class="ft" onclick="filterMenuCat('meat','Beef',this)">Beef</div>
-        </div>
-        <div id="meat-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
-        <div id="meat-list"></div>
+        
+        <div id="l-pasta-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="l-pasta-list"></div>
       </div>
     </div>
-
-    <div id="pg-pizza" class="page hidden">
-      <div class="topbar"><div class="pg-title">Pizza</div><div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Pizza</button></div></div>
-      <div class="content"><div id="pizza-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div><div id="pizza-list"></div></div>
+    <div id="pg-l-salads" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Salads & Soups<span class="badge b-l" style="font-size:12px;padding:3px 10px;margin-left:8px;">(L)</span></div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
+      <div class="content">
+        
+        <div id="l-salads-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="l-salads-list"></div>
+      </div>
     </div>
-
-    <div id="pg-salads" class="page hidden">
-      <div class="topbar"><div class="pg-title">Salads &amp; Soups</div><div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Item</button></div></div>
-      <div class="content"><div id="salads-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div><div id="salads-list"></div></div>
+    <div id="pg-l-sandwiches" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Sandwiches<span class="badge b-l" style="font-size:12px;padding:3px 10px;margin-left:8px;">(L)</span></div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
+      <div class="content">
+        
+        <div id="l-sandwiches-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="l-sandwiches-list"></div>
+      </div>
     </div>
-
-    <div id="pg-sandwiches" class="page hidden">
-      <div class="topbar"><div class="pg-title">Sandwiches &amp; Sides</div><div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Item</button></div></div>
-      <div class="content"><div id="sandwiches-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div><div id="sandwiches-list"></div></div>
+    <div id="pg-l-kids" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Kids Menu<span class="badge b-l" style="font-size:12px;padding:3px 10px;margin-left:8px;">(L)</span></div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
+      <div class="content">
+        
+        <div id="l-kids-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="l-kids-list"></div>
+      </div>
     </div>
-
+    <div id="pg-d-shared" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Shared Plates<span class="badge b-d" style="font-size:12px;padding:3px 10px;margin-left:8px;">(D)</span></div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
+      <div class="content">
+        
+        <div id="d-shared-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="d-shared-list"></div>
+      </div>
+    </div>
+    <div id="pg-d-pasta" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Pasta<span class="badge b-d" style="font-size:12px;padding:3px 10px;margin-left:8px;">(D)</span></div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
+      <div class="content">
+        
+        <div id="d-pasta-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="d-pasta-list"></div>
+      </div>
+    </div>
+    <div id="pg-d-meat" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Meat & Fish<span class="badge b-d" style="font-size:12px;padding:3px 10px;margin-left:8px;">(D)</span></div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
+      <div class="content">
+        <div class="ftabs" id="d-meat-cats"><div class="ft on" onclick="filterMenuCat('d-meat','all',this)">All</div><div class="ft " onclick="filterMenuCat('d-meat','Veal',this)">Veal</div><div class="ft " onclick="filterMenuCat('d-meat','Seafood',this)">Seafood</div><div class="ft " onclick="filterMenuCat('d-meat','Chicken',this)">Chicken</div><div class="ft " onclick="filterMenuCat('d-meat','Beef',this)">Beef</div></div>
+        <div id="d-meat-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="d-meat-list"></div>
+      </div>
+    </div>
+    <div id="pg-d-pizza" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Pizza<span class="badge b-d" style="font-size:12px;padding:3px 10px;margin-left:8px;">(D)</span></div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
+      <div class="content">
+        
+        <div id="d-pizza-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="d-pizza-list"></div>
+      </div>
+    </div>
+    <div id="pg-d-salads" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Salads & Soups<span class="badge b-d" style="font-size:12px;padding:3px 10px;margin-left:8px;">(D)</span></div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
+      <div class="content">
+        
+        <div id="d-salads-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="d-salads-list"></div>
+      </div>
+    </div>
+    <div id="pg-d-sandwiches" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Sandwiches & Sides<span class="badge b-d" style="font-size:12px;padding:3px 10px;margin-left:8px;">(D)</span></div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
+      <div class="content">
+        
+        <div id="d-sandwiches-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="d-sandwiches-list"></div>
+      </div>
+    </div>
     <div id="pg-desserts" class="page hidden">
-      <div class="topbar"><div class="pg-title">Desserts</div><div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dessert</button></div></div>
-      <div class="content"><div id="desserts-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div><div id="desserts-list"></div></div>
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Desserts</div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
+      <div class="content">
+        
+        <div id="desserts-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="desserts-list"></div>
+      </div>
+    </div>
+    <div id="pg-libations" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Libations & Spirits</div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
+      <div class="content">
+        
+        <div id="libations-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="libations-list"></div>
+      </div>
+    </div>
+    <div id="pg-cocktails" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Cocktails & Spritz</div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
+      <div class="content">
+        
+        <div id="cocktails-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="cocktails-list"></div>
+      </div>
+    </div>
+    <div id="pg-beer" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Beer</div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
+      <div class="content">
+        
+        <div id="beer-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="beer-list"></div>
+      </div>
+    </div>
+    <div id="pg-wine" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title" style="display:flex;align-items:center;">Wine</div>
+        <div class="tb-right"><button class="btn btn-primary" onclick="openM('m-dish')">+ Add Dish</button></div>
+      </div>
+      <div class="content">
+        
+        <div id="wine-loading" class="loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="wine-list"></div>
+      </div>
     </div>
 
     <!-- SPECIALS -->
@@ -717,6 +842,66 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
         <div class="m-body" id="cost-card-body" style="padding:0;"></div>
       </div>
     </div>
+
+    <!-- INVOICE LOG -->
+    <div id="pg-invoice-log" class="page hidden">
+      <div class="topbar">
+        <div class="pg-title">📄 Invoice Log</div>
+        <div class="tb-right">
+          <button class="btn btn-gold" onclick="openM('m-upload-invoice')" style="gap:7px;">
+            📷 Upload Invoice Photo
+          </button>
+          <button class="btn btn-primary" onclick="openM('m-add-invoice')">+ Log Invoice</button>
+        </div>
+      </div>
+      <div class="content">
+        <!-- PHASE 2 BANNER -->
+        <div style="background:linear-gradient(135deg,var(--navy),var(--blue));border-radius:var(--r);
+          padding:18px 22px;margin-bottom:20px;display:flex;align-items:center;gap:16px;color:white;">
+          <div style="font-size:32px;flex-shrink:0;">📷</div>
+          <div style="flex:1;">
+            <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;margin-bottom:3px;">
+              Invoice Photo Scanning — Coming Phase 2
+            </div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.6;">
+              Photograph any invoice and AI will automatically extract items, match them to your ingredients, 
+              and update costs — no manual entry needed. For now, log invoices manually below.
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
+            border-radius:var(--r-sm);padding:6px 14px;font-size:11px;font-weight:600;white-space:nowrap;">
+            Phase 2 →
+          </div>
+        </div>
+
+        <!-- STATS ROW -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="inv-stats">
+          <div class="stat"><div class="stat-lbl">Total Invoices</div><div class="stat-val" id="inv-count">—</div><div class="stat-sub">logged</div></div>
+          <div class="stat gold"><div class="stat-lbl">This Month</div><div class="stat-val" id="inv-month">—</div><div class="stat-sub">invoices</div></div>
+          <div class="stat green"><div class="stat-lbl">Total Spent</div><div class="stat-val" id="inv-total" style="font-size:22px">—</div><div class="stat-sub">all time</div></div>
+          <div class="stat teal"><div class="stat-lbl">Suppliers</div><div class="stat-val" id="inv-suppliers">—</div><div class="stat-sub">active</div></div>
+        </div>
+
+        <!-- FILTER ROW -->
+        <div class="search-row" style="margin-bottom:14px;">
+          <div class="search-box"><span class="si">🔍</span><input type="text" placeholder="Search invoices..." oninput="filterInvoices(this.value)"></div>
+          <select class="fs" id="inv-supplier-filter" onchange="filterInvoicesBySupplier(this.value)" style="width:220px;">
+            <option value="all">All Suppliers</option>
+          </select>
+        </div>
+
+        <div class="card">
+          <div id="inv-loading" class="loading"><div class="spinner"></div><span>Loading invoices...</span></div>
+          <table class="tbl" id="inv-table" style="display:none;">
+            <thead><tr>
+              <th>Invoice #</th><th>Date</th><th>Supplier</th><th>Item</th>
+              <th>Qty</th><th>Unit</th><th>Rate</th><th>Total</th><th>Matched?</th><th>Notes</th>
+            </tr></thead>
+            <tbody id="inv-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div><!-- /main -->
 </div><!-- /app -->
 
@@ -725,12 +910,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
   <div class="modal">
     <div class="m-hdr"><div class="m-title">Add Food Ingredient</div><button class="m-close" onclick="closeM('m-food-ing')">×</button></div>
     <div class="m-body">
-      <div class="fr"><div class="fg"><label class="fl">Ingredient Name</label><input class="fi" id="fi-name" placeholder="e.g. Heavy Cream"></div>
+      <div class="fr"><div class="fg"><label class="fl">Ingredient Name</label><input class="fi" id="fi-name" placeholder="e.g. Broccoli"></div>
       <div class="fg"><label class="fl">Category</label><select class="fs" id="fi-cat"><option>Proteins</option><option>Seafood</option><option>Produce</option><option>Dairy</option><option>Dry Goods</option><option>Oils & Vinegars</option><option>Cooking Wine</option><option>Stocks & Bases</option><option>Herbs & Spices</option><option>Baking</option><option>Other</option></select></div></div>
-      <div class="fr"><div class="fg"><label class="fl">Unit</label><input class="fi" id="fi-unit" placeholder="oz, lb, each, bottle..."></div>
-      <div class="fg"><label class="fl">Unit Cost ($)</label><input class="fi" id="fi-cost" type="number" step="0.001" placeholder="0.000"></div></div>
-      <div class="fr"><div class="fg"><label class="fl">Supplier</label><input class="fi" id="fi-sup" placeholder="e.g. Sysco"></div>
-      <div class="fg"><label class="fl">Notes</label><input class="fi" id="fi-notes" placeholder="Optional"></div></div>
+      <div class="fr"><div class="fg"><label class="fl">Purchase Unit</label><input class="fi" id="fi-unit" placeholder="Case, Each, Bottle, Bag..."></div>
+      <div class="fg"><label class="fl">Case Size / Description</label><input class="fi" id="fi-casesize" placeholder="e.g. 20 lb, 24 ct, 6×10oz cans"></div></div>
+      <div class="fr"><div class="fg"><label class="fl">Case Weight (oz) <span style="color:var(--accent);font-size:10px">key field</span></label><input class="fi" id="fi-casewt" type="number" step="0.1" placeholder="Total oz per purchase unit"></div>
+      <div class="fg"><label class="fl">Case Cost ($) <span style="color:var(--ink3);font-size:10px">from invoice</span></label><input class="fi" id="fi-cost" type="number" step="0.01" placeholder="0.00"></div></div>
+      <div style="background:var(--green-bg);border:1px solid rgba(46,125,50,0.2);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--green);">
+        💡 Cost per oz = Case Cost ÷ Case Weight (oz) — auto-calculates in the table
+      </div>
+      <div class="fr"><div class="fg"><label class="fl">Supplier</label><input class="fi" id="fi-sup" placeholder="e.g. Sysco, US Foods"></div>
+      <div class="fg"><label class="fl">Notes</label><input class="fi" id="fi-notes" placeholder="e.g. 20 lb case, seasonal item..."></div></div>
     </div>
     <div class="m-foot"><button class="btn btn-ghost" onclick="closeM('m-food-ing')">Cancel</button><button class="btn btn-primary" onclick="saveFoodIng()">Save to Database</button></div>
   </div>
@@ -816,6 +1006,102 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
       <div class="fg"><label class="fl">Procedure</label><textarea class="fta" id="sp-proc" placeholder="Step by step preparation..."></textarea></div>
     </div>
     <div class="m-foot"><button class="btn btn-ghost" onclick="closeM('m-special')">Cancel</button><button class="btn btn-purple" onclick="saveSpecial()">Save Special</button></div>
+  </div>
+</div>
+
+
+<div class="overlay" id="m-upload-invoice">
+  <div class="modal" style="max-width:520px;">
+    <div class="m-hdr">
+      <div class="m-title">📷 Upload Invoice Photo</div>
+      <button class="m-close" onclick="closeM('m-upload-invoice')">×</button>
+    </div>
+    <div class="m-body">
+      <!-- Phase 2 placeholder UI -->
+      <div style="border:2px dashed var(--border);border-radius:var(--r);padding:40px 24px;
+        text-align:center;background:var(--cream);cursor:pointer;transition:all 0.2s;margin-bottom:16px;"
+        id="upload-drop-zone" onclick="document.getElementById('invoice-file-input').click()"
+        ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+        ondragleave="this.style.borderColor='var(--border)'"
+        ondrop="handleInvoiceDrop(event)">
+        <div style="font-size:48px;margin-bottom:12px;">📸</div>
+        <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:6px;">
+          Drop invoice photo here or click to browse
+        </div>
+        <div style="font-size:12px;color:var(--ink3);">Supports JPG, PNG, PDF · Max 10MB</div>
+        <input type="file" id="invoice-file-input" accept="image/*,.pdf" style="display:none" onchange="handleInvoiceFile(this)">
+      </div>
+
+      <div id="upload-preview" style="display:none;margin-bottom:16px;">
+        <img id="upload-img-preview" style="width:100%;border-radius:var(--r-sm);border:1px solid var(--border);">
+      </div>
+
+      <div style="background:var(--gold-bg);border:1px solid rgba(212,160,23,0.3);
+        border-radius:var(--r-sm);padding:14px 16px;margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:700;color:#7a5a00;margin-bottom:5px;">⚡ Phase 2 Feature</div>
+        <div style="font-size:12px;color:#7a5a00;line-height:1.6;">
+          When Phase 2 is built, uploading an invoice photo will automatically:
+          <br>• Extract all line items using AI
+          <br>• Match items to your ingredient database
+          <br>• Show you a confirmation preview
+          <br>• Update Case Costs with one click
+        </div>
+      </div>
+
+      <div style="font-size:13px;color:var(--ink3);text-align:center;">
+        For now, use <strong>Log Invoice</strong> to manually record invoice data.
+      </div>
+    </div>
+    <div class="m-foot">
+      <button class="btn btn-ghost" onclick="closeM('m-upload-invoice')">Close</button>
+      <button class="btn btn-gold" onclick="closeM('m-upload-invoice');openM('m-add-invoice')">
+        Log Manually Instead →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD INVOICE MODAL -->
+<div class="overlay" id="m-add-invoice">
+  <div class="modal">
+    <div class="m-hdr">
+      <div class="m-title">Log Invoice</div>
+      <button class="m-close" onclick="closeM('m-add-invoice')">×</button>
+    </div>
+    <div class="m-body">
+      <div class="fr">
+        <div class="fg"><label class="fl">Invoice #</label><input class="fi" id="inv-num" placeholder="e.g. 18843"></div>
+        <div class="fg"><label class="fl">Date</label><input class="fi" id="inv-date" type="date"></div>
+      </div>
+      <div class="fg"><label class="fl">Supplier</label>
+        <input class="fi" id="inv-supplier" list="supplier-list" placeholder="e.g. One on One Produce">
+        <datalist id="supplier-list">
+          <option>One on One Produce</option>
+          <option>One on One Seafood</option>
+          <option>The Market at Lafayette Hill</option>
+          <option>Sysco</option>
+          <option>US Foods</option>
+          <option>Republic National</option>
+        </datalist>
+      </div>
+      <div style="background:var(--cream);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:10px;letter-spacing:1px;text-transform:uppercase;">Line Items</div>
+        <div id="inv-line-items">
+          <div class="inv-line" style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+            <input class="fi" placeholder="Item name" style="font-size:12px;">
+            <input class="fi" placeholder="Qty" type="number" style="font-size:12px;">
+            <input class="fi" placeholder="Unit" style="font-size:12px;">
+            <input class="fi" placeholder="Rate $" type="number" step="0.01" style="font-size:12px;">
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="addInvLine()" style="margin-top:4px;">+ Add Line</button>
+      </div>
+      <div class="fg"><label class="fl">Notes</label><input class="fi" id="inv-notes" placeholder="Optional"></div>
+    </div>
+    <div class="m-foot">
+      <button class="btn btn-ghost" onclick="closeM('m-add-invoice')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveInvoice()">Save Invoice</button>
+    </div>
   </div>
 </div>
 
@@ -983,18 +1269,62 @@ async function loadDashboard(){
 // ── ING TABLE ───────────────────────────────────────
 function renderIngTbl(tbodyId, ings){
   const tb = document.getElementById(tbodyId);
-  if(!ings.length){ tb.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--ink3)">No ingredients found.</td></tr>`; return; }
-  tb.innerHTML = ings.map((r,i)=>`
-    <tr>
-      <td style="color:var(--ink3);font-size:11px">${r[0]||i+1}</td>
-      <td><strong>${r[1]||''}</strong></td>
-      <td><span style="font-size:11px;color:var(--ink3)">${r[2]||''}</span></td>
-      <td><span class="mono">${r[3]||''}</span></td>
-      <td><span class="cost">${r[4]?'$'+Number(r[4]).toFixed(3):'—'}</span></td>
-      <td style="font-size:12px">${r[6]||''}</td>
-      <td><span class="badge ${r[7]==='Yes'?'b-yes':'b-no'}">${r[7]||'Yes'}</span></td>
-      <td><button class="ib" onclick="toast('Edit costs directly in Google Sheets for now','success')">✏️</button></td>
-    </tr>`).join('');
+  const isFood = tbodyId === 'food-tbody';
+  if(!ings.length){
+    const cols = isFood ? 11 : 8;
+    tb.innerHTML=`<tr><td colspan="${cols}" style="text-align:center;padding:40px;color:var(--ink3)">No ingredients found.</td></tr>`;
+    return;
+  }
+  if(isFood){
+    // Food: #, Name, Category, Purchase Unit, Case Size, Case Wt(oz), Case Cost, Cost/Oz, Supplier, Active, Edit
+    // Columns: 0=#, 1=Name, 2=Category, 3=PurchaseUnit, 4=CaseSize, 5=CaseWtOz, 6=CaseCost, 7=CostPerOz(formula), 8=Supplier, 9=Active, 10=Notes
+    tb.innerHTML = ings.map((r,i)=>{
+      const caseWt  = parseFloat(r[5])||0;
+      const caseCost= parseFloat(r[6])||0;
+      const cpoz    = caseWt>0&&caseCost>0 ? (caseCost/caseWt).toFixed(4) : null;
+      return `<tr>
+        <td style="color:var(--ink3);font-size:11px">${r[0]||i+1}</td>
+        <td><strong>${r[1]||''}</strong></td>
+        <td><span style="font-size:11px;color:var(--ink3)">${r[2]||''}</span></td>
+        <td><span class="mono">${r[3]||''}</span></td>
+        <td style="font-size:12px;color:var(--ink3)">${r[4]||''}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:12px">${r[5]||'<span style="color:#ccc">—</span>'}</td>
+        <td><span class="price">${caseCost?'$'+caseCost.toFixed(2):'<span style="color:#ccc">—</span>'}</span></td>
+        <td style="background:rgba(46,125,50,0.04)"><span class="cost" style="font-weight:700">${cpoz?'$'+cpoz:'<span style="color:#ccc;font-size:11px">enter wt & cost</span>'}</span></td>
+        <td style="font-size:12px">${r[8]||''}</td>
+        <td><span class="badge ${r[9]==='Yes'?'b-yes':'b-no'}">${r[9]||'Yes'}</span></td>
+        <td><button class="ib" onclick="editFoodIng(${i})" title="Edit">✏️</button></td>
+      </tr>`;
+    }).join('');
+  } else {
+    tb.innerHTML = ings.map((r,i)=>`
+      <tr>
+        <td style="color:var(--ink3);font-size:11px">${r[0]||i+1}</td>
+        <td><strong>${r[1]||''}</strong></td>
+        <td><span style="font-size:11px;color:var(--ink3)">${r[2]||''}</span></td>
+        <td><span class="mono">${r[3]||''}</span></td>
+        <td><span class="cost">${r[4]?'$'+Number(r[4]).toFixed(2):'—'}</span></td>
+        <td style="font-size:12px">${r[6]||''}</td>
+        <td><span class="badge ${r[7]==='Yes'?'b-yes':'b-no'}">${r[7]||'Yes'}</span></td>
+        <td><button class="ib" onclick="toast('Edit mode coming soon','success')">✏️</button></td>
+      </tr>`).join('');
+  }
+}
+
+function editFoodIng(idx){
+  if(!editMode){ toast('Enable edit mode first (🔒 button top right)','error'); return; }
+  const r = allFoodIngs[idx];
+  if(!r) return;
+  // Pre-fill modal
+  document.getElementById('fi-name').value = r[1]||'';
+  document.getElementById('fi-cat').value  = r[2]||'';
+  document.getElementById('fi-unit').value = r[3]||'';
+  document.getElementById('fi-casesize').value = r[4]||'';
+  document.getElementById('fi-casewt').value   = r[5]||'';
+  document.getElementById('fi-cost').value     = r[6]||'';
+  document.getElementById('fi-sup').value  = r[8]||'';
+  document.getElementById('fi-notes').value= r[10]||'';
+  openM('m-food-ing');
 }
 
 async function loadFoodIngs(){
@@ -1018,7 +1348,16 @@ function filterBevCat(cat,el){ tabSwitch('#bev-cats',el); renderIngTbl('bev-tbod
 // ── SAVE INGS ───────────────────────────────────────
 async function saveFoodIng(){
   const n=v('fi-name'); if(!n){toast('Enter a name','error');return;}
-  const vals=[allFoodIngs.length+1,n,v('fi-cat'),v('fi-unit'),v('fi-cost')||'','',v('fi-sup'),'Yes',v('fi-notes')];
+  // Cols: #, Name, Category, PurchaseUnit, CaseSize, CaseWtOz, CaseCost, CostPerOz(calc), Supplier, Active, Notes
+  const caseWt   = parseFloat(document.getElementById('fi-casewt').value)||0;
+  const caseCost = parseFloat(document.getElementById('fi-cost').value)||0;
+  const cpoz     = caseWt>0&&caseCost>0 ? (caseCost/caseWt).toFixed(4) : '';
+  const vals=[
+    allFoodIngs.length+1, n, v('fi-cat'),
+    v('fi-unit'), v('fi-casesize'),
+    caseWt||'', caseCost||'', cpoz,
+    v('fi-sup'), 'Yes', v('fi-notes')
+  ];
   closeM('m-food-ing'); await appendRow('Food Ingredients',vals); loadFoodIngs();
 }
 async function saveBevIng(){
@@ -1118,6 +1457,7 @@ async function loadPrep(){
   hide('prep-loading');
 }
 function renderPrep(items){
+  window._rcRegistry = [];
   const el=document.getElementById('prep-list');
   if(!items.length){el.innerHTML=empty('🔧','No prep recipes yet','Add your first prep recipe above.');return;}
   el.innerHTML=items.map(r=>buildCard(r.name,r.cat,r.station,r.yQty,r.yUnit,r.portion,r.freq,r.comps,r.proc)).join('');
@@ -1239,6 +1579,213 @@ function setSyncing(s){
 }
 
 
+
+// ── FILTERED MENU LOADER ─────────────────────────────────────
+async function loadMenuFiltered(pgId, sheetName, menuTag, catFilter=''){
+  const ld = document.getElementById(pgId+'-loading');
+  const ls = document.getElementById(pgId+'-list');
+  if(ld) ld.style.display='flex';
+  if(ls) ls.innerHTML='';
+  try{
+    const rows = await getRows(sheetName);
+    let items = parseSheet(rows);
+    // Filter by menu tag (L or D) if specified
+    if(menuTag){
+      items = items.filter(r=>{
+        const m = (r.menu||r.tags||'');
+        return m.includes(menuTag);
+      });
+    }
+    // Filter by category if specified
+    if(catFilter) items = items.filter(r=>r.cat===catFilter);
+    menuData[pgId] = items;
+    renderMenu(pgId, items);
+  }catch(e){ toast('Could not load '+sheetName,'error'); }
+  if(ld) ld.style.display='none';
+}
+
+// ── BEVERAGE BY CATEGORY ─────────────────────────────────────
+async function loadBevByCategory(pgId, categories){
+  const ld = document.getElementById(pgId+'-loading');
+  const ls = document.getElementById(pgId+'-list');
+  if(ld) ld.style.display='flex';
+  if(ls) ls.innerHTML='';
+  try{
+    const rows = await getRows('Beverage Ingredients');
+    const items = rows.slice(4).filter(r=>r&&r[1]&&categories.includes(r[2]));
+    // Render as ingredient table
+    const el = document.getElementById(pgId+'-list');
+    if(!items.length){
+      el.innerHTML = '<div class="empty"><div class="ei">🍺</div><h3>No items found</h3><p>Add beverage ingredients filtered to these categories.</p></div>';
+    } else {
+      // Group by category
+      const cats = [...new Set(items.map(r=>r[2]))];
+      el.innerHTML = cats.map(cat=>{
+        const its = items.filter(r=>r[2]===cat);
+        return `<div class="cat-divider">${cat}</div>
+          <div class="card" style="margin-bottom:14px;">
+            <table class="tbl">
+              <thead><tr><th>#</th><th>Name</th><th>Unit</th><th>Unit Cost</th><th>Supplier</th></tr></thead>
+              <tbody>${its.map((r,i)=>`<tr>
+                <td style="color:var(--ink3);font-size:11px">${r[0]||i+1}</td>
+                <td><strong>${r[1]||''}</strong></td>
+                <td class="mono">${r[3]||''}</td>
+                <td class="cost">${r[4]?'$'+Number(r[4]).toFixed(2):'—'}</td>
+                <td style="font-size:12px">${r[6]||''}</td>
+              </tr>`).join('')}</tbody>
+            </table>
+          </div>`;
+      }).join('');
+    }
+  }catch(e){ toast('Could not load beverage data','error'); }
+  if(ld) ld.style.display='none';
+}
+
+
+// ── INVOICE LOG ─────────────────────────────────────────────
+let allInvoices = [];
+
+async function loadInvoiceLog(){
+  const ld = document.getElementById('inv-loading');
+  const tbl = document.getElementById('inv-table');
+  if(ld) ld.style.display='flex';
+  if(tbl) tbl.style.display='none';
+  try{
+    const rows = await getRows('Invoice Log');
+    allInvoices = rows.slice(4).filter(r=>r&&r[0]);
+    renderInvoices(allInvoices);
+    updateInvoiceStats(allInvoices);
+    populateSupplierFilter(allInvoices);
+  }catch(e){ toast('Could not load invoice log','error'); }
+  if(ld) ld.style.display='none';
+  if(tbl) tbl.style.display='table';
+}
+
+function renderInvoices(invs){
+  const tb = document.getElementById('inv-tbody');
+  if(!invs.length){
+    tb.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--ink3)">No invoices logged yet. Click Log Invoice to add your first one.</td></tr>';
+    return;
+  }
+  // Group by invoice number
+  const grouped = {};
+  invs.forEach(r=>{ const k=r[0]+'-'+r[1]; if(!grouped[k])grouped[k]=[]; grouped[k].push(r); });
+  let html='';
+  Object.entries(grouped).forEach(([key,rows])=>{
+    const first=rows[0];
+    html+=`<tr style="background:var(--cream2);">
+      <td colspan="2"><strong>Invoice #${first[0]||''}</strong> · ${first[1]||''}</td>
+      <td colspan="3" style="color:var(--ink3);font-size:12px;">${first[2]||''}</td>
+      <td colspan="5" style="text-align:right;font-size:12px;color:var(--ink3);">
+        ${rows.length} items · Total: <strong class="cost">$${rows.reduce((s,r)=>s+(parseFloat(r[7])||0),0).toFixed(2)}</strong>
+      </td>
+    </tr>`;
+    rows.forEach((r,i)=>{
+      const matched = r[8]==='Yes';
+      html+=`<tr style="background:${i%2===0?'var(--white)':'var(--cream)'}">
+        <td style="color:var(--ink3);font-size:11px">${r[0]||''}</td>
+        <td style="font-size:11px">${r[1]||''}</td>
+        <td style="font-size:12px;color:var(--ink3)">${r[2]||''}</td>
+        <td><strong>${r[3]||''}</strong></td>
+        <td class="mono">${r[4]||''}</td>
+        <td style="font-size:11px;color:var(--ink3)">${r[5]||''}</td>
+        <td class="price">${r[6]?'$'+Number(r[6]).toFixed(2):'—'}</td>
+        <td class="cost">${r[7]?'$'+Number(r[7]).toFixed(2):'—'}</td>
+        <td><span class="badge ${matched?'b-yes':'b-no'}">${r[8]||'No'}</span></td>
+        <td style="font-size:11px;color:var(--ink3)">${r[9]||''}</td>
+      </tr>`;
+    });
+  });
+  tb.innerHTML=html;
+}
+
+function updateInvoiceStats(invs){
+  document.getElementById('inv-count').textContent = new Set(invs.map(r=>r[0]+r[1])).size;
+  const now=new Date(); const m=now.getMonth(); const y=now.getFullYear();
+  const thisMonth=invs.filter(r=>{
+    if(!r[1]) return false;
+    const [mo,d,yr]=r[1].split('/'); return parseInt(mo)-1===m && parseInt(yr)===y;
+  });
+  document.getElementById('inv-month').textContent = new Set(thisMonth.map(r=>r[0]+r[1])).size;
+  const total=invs.reduce((s,r)=>s+(parseFloat(r[7])||0),0);
+  document.getElementById('inv-total').textContent='$'+total.toFixed(0);
+  document.getElementById('inv-suppliers').textContent=new Set(invs.map(r=>r[2]).filter(Boolean)).size;
+}
+
+function populateSupplierFilter(invs){
+  const sel=document.getElementById('inv-supplier-filter');
+  const sups=[...new Set(invs.map(r=>r[2]).filter(Boolean))];
+  sel.innerHTML='<option value="all">All Suppliers</option>'+sups.map(s=>`<option>${s}</option>`).join('');
+}
+
+function filterInvoices(q){
+  const f=allInvoices.filter(r=>(r[3]||'').toLowerCase().includes(q.toLowerCase())||(r[2]||'').toLowerCase().includes(q.toLowerCase()));
+  renderInvoices(f);
+}
+function filterInvoicesBySupplier(sup){
+  const f=sup==='all'?allInvoices:allInvoices.filter(r=>r[2]===sup);
+  renderInvoices(f);
+}
+
+function addInvLine(){
+  const div=document.createElement('div');
+  div.className='inv-line';
+  div.style.cssText='display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;';
+  div.innerHTML=`
+    <input class="fi" placeholder="Item name" style="font-size:12px;">
+    <input class="fi" placeholder="Qty" type="number" style="font-size:12px;">
+    <input class="fi" placeholder="Unit" style="font-size:12px;">
+    <input class="fi" placeholder="Rate $" type="number" step="0.01" style="font-size:12px;">`;
+  document.getElementById('inv-line-items').appendChild(div);
+}
+
+async function saveInvoice(){
+  const num=v('inv-num'); const date=v('inv-date'); const sup=v('inv-supplier');
+  if(!num||!date||!sup){toast('Fill in invoice #, date and supplier','error');return;}
+  const lines=document.querySelectorAll('.inv-line');
+  const rows=[];
+  lines.forEach(line=>{
+    const inputs=line.querySelectorAll('input');
+    const item=inputs[0].value.trim();
+    const qty=inputs[1].value;
+    const unit=inputs[2].value;
+    const rate=inputs[3].value;
+    if(item){
+      const amt=qty&&rate?parseFloat(qty)*parseFloat(rate):0;
+      rows.push([num,date,sup,item,qty||'',unit||'',rate||'',amt||'','No',v('inv-notes')]);
+    }
+  });
+  if(!rows.length){toast('Add at least one line item','error');return;}
+  closeM('m-add-invoice');
+  for(const row of rows) await appendRow('Invoice Log',row);
+  toast(`Invoice #${num} logged — ${rows.length} items`,'success');
+  loadInvoiceLog();
+}
+
+// ── UPLOAD HANDLERS (Phase 2 placeholder) ───────────────────
+function handleInvoiceFile(input){
+  if(!input.files||!input.files[0]) return;
+  const file=input.files[0];
+  if(file.type.startsWith('image/')){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      document.getElementById('upload-img-preview').src=e.target.result;
+      document.getElementById('upload-preview').style.display='block';
+    };
+    reader.readAsDataURL(file);
+  }
+  toast('📷 Photo received! AI scanning coming in Phase 2 — log manually for now.','success');
+}
+function handleInvoiceDrop(e){
+  e.preventDefault();
+  document.getElementById('upload-drop-zone').style.borderColor='var(--border)';
+  const file=e.dataTransfer.files[0];
+  if(file){
+    document.getElementById('invoice-file-input').files=e.dataTransfer.files;
+    handleInvoiceFile(document.getElementById('invoice-file-input'));
+  }
+}
+
 // ── EDIT MODE ───────────────────────────────────────────────────
 let editMode = false;
 function toggleEdit(){
@@ -1302,12 +1849,14 @@ function buildCard(name, category, station, yQty, yUnit, portion, freq,
 
   const meta = [category,station,yQty&&yUnit?`Yield: ${yQty} ${yUnit}`:'',freq].filter(Boolean).join(' · ');
 
-  // Encode recipe data for buttons
-  const rd = encodeURIComponent(JSON.stringify({name,category,station,yQty,yUnit,portion,freq,comps,procTxt,price,cost,targetFC,tags}));
+  // Store recipe data in global registry, reference by index
+  const recipeIdx = window._rcRegistry ? window._rcRegistry.length : 0;
+  if(!window._rcRegistry) window._rcRegistry = [];
+  window._rcRegistry.push({name,category,station,yQty,yUnit,portion,freq,comps,procTxt,price,cost,targetFC,tags});
 
   const actionBtns = `<div class="rc-actions">
-    <button class="rc-act-btn btn-print" onclick="printRecipeCard(${rd})">🖨️ Print Recipe Card</button>
-    <button class="rc-act-btn btn-cost" onclick="openCostCard(${rd})">💰 Cost Card</button>
+    <button class="rc-act-btn btn-print" onclick="printRecipeCard(${recipeIdx})">🖨️ Print Recipe Card</button>
+    <button class="rc-act-btn btn-cost" onclick="openCostCard(${recipeIdx})">💰 Cost Card</button>
     <button class="rc-act-btn btn-edit-item" style="display:${editMode?'inline-flex':'none'}" onclick="toast('Edit via Google Sheets for now — full inline editing coming soon','success')">✏️ Edit Recipe</button>
   </div>`;
 
@@ -1327,8 +1876,8 @@ function buildCard(name, category, station, yQty, yUnit, portion, freq,
 }
 
 // ── PRINT RECIPE CARD ────────────────────────────────────────────
-function printRecipeCard(rdEncoded){
-  const r = JSON.parse(decodeURIComponent(rdEncoded));
+function printRecipeCard(idx){
+  const r = window._rcRegistry[idx]; if(!r){toast("Recipe data not found","error");return;}
   const ingRows = (r.comps||[]).map(c=>`
     <tr>
       <td>${c[1]||''}</td>
@@ -1414,8 +1963,8 @@ function printRecipeCard(rdEncoded){
 }
 
 // ── COST CARD ────────────────────────────────────────────────────
-function openCostCard(rdEncoded){
-  const r = JSON.parse(decodeURIComponent(rdEncoded));
+function openCostCard(idx){
+  const r = window._rcRegistry[idx]; if(!r){toast("Recipe data not found","error");return;}
   const comps = r.comps||[];
 
   let totalCost = 0;
@@ -1502,6 +2051,17 @@ function printCostCard(){
 async function loadFcDashboard(){
   document.getElementById('fc-dash-loading').style.display='flex';
   document.getElementById('fc-dash-content').style.display='none';
+
+  // Safety timeout — show content even if data fails
+  const timeout = setTimeout(()=>{
+    document.getElementById('fc-dash-loading').style.display='none';
+    document.getElementById('fc-dash-content').style.display='block';
+    document.getElementById('fc-overall').textContent='—';
+    document.getElementById('fc-by-cat').innerHTML='<p style="padding:16px;font-size:13px;color:var(--ink3)">Add menu prices and ingredient costs to recipes to see analysis here.</p>';
+    document.getElementById('fc-best').innerHTML='<p style="padding:16px;font-size:13px;color:var(--ink3)">No priced recipes yet.</p>';
+    document.getElementById('fc-worst').innerHTML='<p style="padding:16px;font-size:13px;color:var(--ink3)">No priced recipes yet.</p>';
+    document.getElementById('fc-all-tbody').innerHTML='<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--ink3)">No priced recipes found. Add menu prices and ingredient costs to see food cost analysis.</td></tr>';
+  }, 8000);
 
   try{
     const sheets = [
@@ -1593,7 +2153,8 @@ async function loadFcDashboard(){
     }).join('');
     document.getElementById('fc-all-tbody').innerHTML = tbodyHtml;
 
-  }catch(e){ console.error('FC Dashboard error:',e); toast('Could not load cost data','error'); }
+  }catch(e){ console.error('FC Dashboard error:',e); toast('Could not load cost data — enter prices in recipes first','error'); }
+  clearTimeout(timeout);
   document.getElementById('fc-dash-loading').style.display='none';
   document.getElementById('fc-dash-content').style.display='block';
 }
