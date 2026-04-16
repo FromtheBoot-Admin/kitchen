@@ -1367,57 +1367,7 @@ async function saveBevIng(){
 }
 
 // ── RECIPE CARD ─────────────────────────────────────
-function buildCard_OLD(name, category, station, yQty, yUnit, portion, freq,
-                    comps, procTxt, price, cost, targetFC, hdrCls='', tags='',
-                    status='', dates='', chefNotes=''){
-  const fcPct = price&&cost ? (cost/price*100).toFixed(1) : null;
-  const fcCls = fcPct ? (fcPct<28?'fc-good':fcPct<35?'fc-warn':'fc-bad') : '';
 
-  const tagsHtml = (tags||'').split(' ').filter(Boolean).map(t=>{
-    if(t==='GF') return `<span class="badge b-gf">GF</span>`;
-    if(t==='V')  return `<span class="badge b-v">V</span>`;
-    if(t==='GFA')return `<span class="badge b-gf" style="opacity:.7">GFA</span>`;
-    return '';
-  }).join(' ');
-
-  const spMeta = status ? `<div style="display:flex;gap:7px;align-items:center;margin-bottom:9px;flex-wrap:wrap">
-    <span class="badge b-${status.toLowerCase()}">${status}</span>
-    ${dates?`<span style="font-size:11px;color:var(--ink3)">📅 ${dates}</span>`:''}
-    ${chefNotes?`<span style="font-size:11px;color:var(--ink3)">💬 ${chefNotes}</span>`:''}
-  </div>` : '';
-
-  const fcRow = (price||cost) ? `<div class="fc-row">
-    ${price?`<div class="fc-item"><div class="fc-lbl">Menu Price</div><div class="fc-val price">$${Number(price).toFixed(2)}</div></div>`:''}
-    ${cost?`<div class="fc-item"><div class="fc-lbl">Portion Cost</div><div class="fc-val cost">$${Number(cost).toFixed(2)}</div></div>`:''}
-    ${fcPct?`<div class="fc-item"><div class="fc-lbl">Food Cost %</div><div class="fc-val ${fcCls}">${fcPct}%</div></div>`:''}
-    ${targetFC?`<div class="fc-item"><div class="fc-lbl">Target FC%</div><div class="fc-val" style="color:var(--ink3)">${targetFC}</div></div>`:''}
-  </div>` : '';
-
-  const compsHtml = comps&&comps.length ? `<table class="comp-table">
-    <thead><tr><th>Component</th><th>Amount</th><th>Unit</th><th>Source</th></tr></thead>
-    <tbody>${comps.map(c=>`<tr><td>${c[0]||''}</td><td class="mono">${c[1]||''}</td><td class="mono">${c[2]||''}</td><td><span class="src-tag">${c[3]||''}</span></td></tr>`).join('')}</tbody>
-  </table>` : '';
-
-  const procHtml = procTxt&&!procTxt.includes('[Enter') ? `<div class="proc-block">
-    <div class="proc-lbl">Procedure</div><div class="proc-txt">${procTxt}</div>
-  </div>` : '';
-
-  const meta = [category,station,yQty&&yUnit?`Yield: ${yQty} ${yUnit}`:'',freq].filter(Boolean).join(' · ');
-
-  return `<div class="rc">
-    <div class="rc-hdr ${hdrCls}" onclick="toggleRc(this)">
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
-          <div class="rc-name">${name}</div>${tagsHtml}
-        </div>
-        <div class="rc-meta">${meta}</div>
-      </div>
-      ${cost?`<div class="rc-cost"><div class="rc-cost-lbl">Cost/Portion</div><div class="rc-cost-val">$${Number(cost).toFixed(2)}</div></div>`:''}
-      <div class="rc-arrow">▾</div>
-    </div>
-    <div class="rc-body">${spMeta}${fcRow}${compsHtml}${procHtml}</div>
-  </div>`;
-}
 
 function toggleRc(hdr){
   const body=hdr.nextElementSibling;
@@ -1457,7 +1407,6 @@ async function loadPrep(){
   hide('prep-loading');
 }
 function renderPrep(items){
-  window._rcRegistry = [];
   const el=document.getElementById('prep-list');
   if(!items.length){el.innerHTML=empty('🔧','No prep recipes yet','Add your first prep recipe above.');return;}
   el.innerHTML=items.map(r=>buildCard(r.name,r.cat,r.station,r.yQty,r.yUnit,r.portion,r.freq,r.comps,r.proc)).join('');
@@ -1849,18 +1798,20 @@ function buildCard(name, category, station, yQty, yUnit, portion, freq,
 
   const meta = [category,station,yQty&&yUnit?`Yield: ${yQty} ${yUnit}`:'',freq].filter(Boolean).join(' · ');
 
-  // Store recipe data in global registry, reference by index
-  const recipeIdx = window._rcRegistry ? window._rcRegistry.length : 0;
-  if(!window._rcRegistry) window._rcRegistry = [];
-  window._rcRegistry.push({name,category,station,yQty,yUnit,portion,freq,comps,procTxt,price,cost,targetFC,tags});
+  // Store data on the card element via a unique ID
+  const cardId = 'rc-' + Math.random().toString(36).substr(2,9);
 
   const actionBtns = `<div class="rc-actions">
-    <button class="rc-act-btn btn-print" onclick="printRecipeCard(${recipeIdx})">🖨️ Print Recipe Card</button>
-    <button class="rc-act-btn btn-cost" onclick="openCostCard(${recipeIdx})">💰 Cost Card</button>
+    <button class="rc-act-btn btn-print" onclick="printRecipeCard('${cardId}')">🖨️ Print Recipe Card</button>
+    <button class="rc-act-btn btn-cost" onclick="openCostCard('${cardId}')">💰 Cost Card</button>
     <button class="rc-act-btn btn-edit-item" style="display:${editMode?'inline-flex':'none'}" onclick="toast('Edit via Google Sheets for now — full inline editing coming soon','success')">✏️ Edit Recipe</button>
   </div>`;
 
-  return `<div class="rc">
+  // Store recipe data globally keyed by cardId
+  if(!window._rcData) window._rcData = {};
+  window._rcData[cardId] = {name,category,station,yQty,yUnit,portion,freq,comps:comps||[],procTxt,price,cost,targetFC,tags};
+
+  return `<div class="rc" id="${cardId}">
     <div class="rc-hdr ${hdrCls}" onclick="toggleRc(this)">
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
@@ -1876,8 +1827,9 @@ function buildCard(name, category, station, yQty, yUnit, portion, freq,
 }
 
 // ── PRINT RECIPE CARD ────────────────────────────────────────────
-function printRecipeCard(idx){
-  const r = window._rcRegistry[idx]; if(!r){toast("Recipe data not found","error");return;}
+function printRecipeCard(cardId){
+  const r = window._rcData && window._rcData[cardId];
+  if(!r){toast("Recipe data not found — try reopening the card","error");return;}
   const ingRows = (r.comps||[]).map(c=>`
     <tr>
       <td>${c[1]||''}</td>
